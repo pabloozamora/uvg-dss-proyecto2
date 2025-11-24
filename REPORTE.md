@@ -451,7 +451,7 @@ curl -X GET "http://localhost:9200/filebeat-juice-shop-*/_search?size=1&pretty"
 ## Paso 5: Visualización en Kibana
 
 ### Objetivo
-[Describe el objetivo]
+Configurar Data Views, crear visualizaciones y armar dashboards.
 
 ### Configuraciones Realizadas
 
@@ -462,40 +462,88 @@ curl -X GET "http://localhost:9200/filebeat-juice-shop-*/_search?size=1&pretty"
 - Index pattern: filebeat-*
 - Timestamp field: @timestamp
 
-[Describe cómo lo creaste]
+**Data View 1: Todos los Logs**
+- Name: Todos los Logs
+- Index pattern: filebeat-*
+- Timestamp field: @timestamp
 
 #### Visualizaciones Creadas
 
 **Visualización 1: Distribución por Contenedor**
 - Tipo: Pie Chart
-- Campo: container.name.keyword
-- [Describe configuración]
+- Segmentación: container.name.keyword
+- Métrica: Conteo de registros
 
 **Visualización 2: Volumen en el Tiempo**
 - Tipo: Line Chart
-- [Describe configuración]
+- Eje horizontal: @timestamp
+- Eje vertical: Conteo de registros
+- Segmentación: container.name.keyword
 
-**Visualización 3: Total de Logs**
-- Tipo: Metric
-- [Describe configuración]
+**Visualización 3: Top 10 de mensajes de Juice Shop**
+- Tipo: Tabla
+- Filas: message.keyword
+- Métrica: Conteo de registros
+
+**Visualización 4: Total de logs**
+- Tipo: Métrica (Legacy)
+- Métrica: Conteo de registros
 
 #### Dashboard Creado
 
 **Nombre**: Overview de Logs del Sistema
 
 **Visualizaciones incluidas**:
-1. [Lista de visualizaciones]
-
-[Describe el layout]
+1. Gráfico circular mostrando distribución de logs por contenedor
+2. Líneas de tiempo mostrando volumen de logs por contenedor
+3. Tabla con los 10 mensajes más frecuentes de Juice Shop
+4. Número grande mostrando total de logs
 
 ### Screenshots
 
-[Mínimo 12 screenshots]
-
 #### Screenshot 5.1: Creación de Data View
-![Data View](./screenshots/paso-5/01-data-view.png)
+![Data View](./paso5/data-views-created.PNG)
 
-[Continúa con todos...]
+#### Screenshot 5.2: Discover mostrando logs
+![Discover](./paso5/discover.PNG)
+
+#### Screenshot 5.3: Búsqueda con KQL
+![Discover](./paso5/kql-search.PNG)
+![Discover](./paso5/kql-search-errors.PNG)
+![Discover](./paso5/kql-search-multiple.PNG)
+
+#### Screenshot 5.4: Log expandido con todos los campos
+![Log](./paso5/expanded-log.PNG)
+
+#### Screenshot 5.5: Creación de Pie Chart
+![Visualization](./paso5/records-by-container-creation.PNG)
+
+#### Screenshot 5.6: Pie Chart completado
+![Visualization](./paso5/records-by-container.PNG)
+
+#### Screenshot 5.7: Creación de Line Chart
+![Visualization](./paso5/volume-by-container-creation.PNG)
+
+#### Screenshot 5.8: Line Chart completado
+![Visualization](./paso5/volume-by-container.PNG)
+
+#### Screenshot 5.9: Creación de Tabla
+![Visualization](./paso5/top-messages-creation.PNG)
+
+#### Screenshot 5.10: Tabla completada
+![Visualization](./paso5/top-messages.PNG)
+
+#### Screenshot 5.11: Metric completado
+![Visualization](./paso5/metric.PNG)
+
+#### Screenshot 5.12: Visualize Library con las visualizaciones
+![Visualization](./paso5/visualization-library.PNG)
+
+#### Screenshot 5.13: Dashboard completo
+![Visualization](./paso5/visualization-library.PNG)
+
+#### Screenshot 5.14: Dev Tools con query avanzada
+![Visualization](./paso5/dev-tools.PNG)
 
 ### Búsquedas KQL Utilizadas
 
@@ -504,14 +552,22 @@ curl -X GET "http://localhost:9200/filebeat-juice-shop-*/_search?size=1&pretty"
 container.name: "juice-shop"
 ```
 
-[Documenta todas las búsquedas que hiciste]
+```kql
+# Búsqueda 2: Mensajes que contienen 'error'
+message: *error*
+```
+
+```kql
+# Búsqueda 3: Mensajes de Juice Shop o Kibana
+container.name: ("juice-shop" OR "kibana")
+```
 
 ### Verificación de Éxito
-- [ ] Data View creado
-- [ ] Discover funcional
-- [ ] 3 visualizaciones creadas
-- [ ] Dashboard creado
-- [ ] 12 screenshots capturados
+- [x] Data View creado
+- [x] Discover funcional
+- [x] 3 visualizaciones creadas
+- [x] Dashboard creado
+- [x] 12 screenshots capturados
 
 ### Conceptos Aprendidos
 1. **Data Views**: [Explica]
