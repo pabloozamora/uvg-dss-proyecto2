@@ -1,0 +1,147 @@
+{
+	"info": {
+		"_postman_id": "081b4fa9-ac0d-442c-8391-e758088e6113",
+		"name": "DSS Proyecto 2",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "38870608",
+		"_collection_link": "https://mdt111.postman.co/workspace/My-Workspace~3589ef29-d905-43f9-8206-ab088a8410f6/collection/38870608-081b4fa9-ac0d-442c-8391-e758088e6113?action=share&source=collection_link&creator=38870608"
+	},
+	"item": [
+		{
+			"name": "Reglas",
+			"item": [
+				{
+					"name": "SQL Injection",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "kbn-xsrf",
+								"value": "true"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Basic ZWxhc3RpYzpjaGFuZ2VtZQ=="
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"rule_id\": \"detect-sqli-002\",\n  \"name\": \"SQL Injection Detection - Nginx\",\n  \"description\": \"Detecta patrones de SQL Injection en request_uri de nginx\",\n  \"index\": [\"filebeat-nginx-access-*\"],\n  \"type\": \"query\",\n  \"language\": \"kuery\",\n  \"query\": \"request_uri: (*OR* or *UNION* or *SELECT* or *INSERT* or *DROP* or *--* or *%27* or *1=1*)\",\n  \"severity\": \"high\",\n  \"risk_score\": 80,\n  \"interval\": \"1m\",\n  \"from\": \"now-2m\",\n  \"enabled\": true,\n  \"tags\": [\"SQL Injection\", \"Web Attack\", \"OWASP\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5601/api/detection_engine/rules",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5601",
+							"path": [
+								"api",
+								"detection_engine",
+								"rules"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Crear índice",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Basic ZWxhc3RpYzpjaGFuZ2VtZQ=="
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"message\":\"Test log entry\",\n    \"timestamp\":\"2025-11-24T10:00:00Z\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:9200/test-index/_doc",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9200",
+					"path": [
+						"test-index",
+						"_doc"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Crear Pipeline",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "elastic",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "changeme",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"description\": \"Normaliza logs de Juice Shop y detecta payloads comunes\",\n    \"processors\": [\n        {\n            \"lowercase\": {\n                \"field\": \"url.original\",\n                \"ignore_missing\": true\n            }\n        },\n        {\n            \"script\": {\n                \"source\": \"if (ctx?.url?.original != null) {if (ctx.url.original.contains(\\\"union select\\\") || ctx.url.original.contains(\\\" or 1=1\\\")) {ctx.threat = ctx.threat != null ? ctx.threat : [:];ctx.threat.indicator = ctx.threat.indicator != null ? ctx.threat.indicator : [:];ctx.threat.indicator.type = \\\"sql-injection\\\";}}\"\n            }\n        }\n    ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:9200/_ingest/pipeline/juice-threat-normalizer",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9200",
+					"path": [
+						"_ingest",
+						"pipeline",
+						"juice-threat-normalizer"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
