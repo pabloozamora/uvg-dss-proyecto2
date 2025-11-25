@@ -133,8 +133,13 @@ test_kibana_alerts() {
     fi
     
     echo ""
-    echo "2. Verificando índices en Elasticsearch..."
-    indices=$(curl -s "http://elastic:changeme@localhost:9200/_cat/indices?v" | grep filebeat || true)
+    echo "2. Verifying indices in Elasticsearch..."
+    # Use environment variable for credentials
+    ES_USER="${ELASTICSEARCH_USER:-elastic}"
+    ES_PASS="${ELASTICSEARCH_PASSWORD:-changeme}"
+    ES_HOST="${ELASTICSEARCH_HOST:-localhost:9200}"
+    
+    indices=$(curl -s -u "$ES_USER:$ES_PASS" "http://$ES_HOST/_cat/indices?v" | grep filebeat || true)
     if [ -n "$indices" ]; then
         echo -e "${GREEN}✓ Índices de Filebeat encontrados:${NC}"
         echo "$indices"
@@ -157,8 +162,8 @@ test_kibana_alerts() {
     sleep 10
     
     echo ""
-    echo "6. Verificando que los eventos fueron indexados..."
-    sqli_count=$(curl -s "http://elastic:changeme@localhost:9200/filebeat-*/_search" \
+    echo "6. Verifying that events were indexed..."
+    sqli_count=$(curl -s -u "$ES_USER:$ES_PASS" "http://$ES_HOST/filebeat-*/_search" \
         -H 'Content-Type: application/json' \
         -d '{"query":{"query_string":{"query":"*OR 1=1*"}}}' | grep -o '"hits":{"total":{"value":[0-9]*' | grep -o '[0-9]*$' || echo "0")
     
@@ -190,9 +195,10 @@ test_full_workflow() {
     echo -e "${YELLOW}⚠ Ataque detectado en logs${NC}"
     
     echo ""
-    echo "2. [Blue Team] Identificando IP atacante..."
-    ATTACKER_IP="192.168.1.100"
-    echo -e "${GREEN}✓ IP atacante identificada: $ATTACKER_IP${NC}"
+    echo "2. [Blue Team] Identifying attacker IP..."
+    # Configuration: Use environment variable or default test IP
+    ATTACKER_IP="${TEST_ATTACKER_IP:-192.168.1.100}"
+    echo -e "${GREEN}✓ IP attacker identified: $ATTACKER_IP (configured via TEST_ATTACKER_IP)${NC}"
     
     echo ""
     echo "3. [Blue Team] Activando debug logging para captura detallada..."

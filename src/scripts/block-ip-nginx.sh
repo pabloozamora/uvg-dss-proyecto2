@@ -4,8 +4,10 @@
 
 set -e
 
-NGINX_CONF="/home/runner/work/uvg-dss-proyecto2/uvg-dss-proyecto2/src/nginx/blocked_ips.conf"
-CONTAINER_NAME="juice-proxy"
+# Use relative path from script location or environment variable
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+NGINX_CONF="${NGINX_BLOCKED_IPS_CONF:-${SCRIPT_DIR}/../nginx/blocked_ips.conf}"
+CONTAINER_NAME="${NGINX_CONTAINER_NAME:-juice-proxy}"
 
 # Colores para output
 RED='\033[0;31m'

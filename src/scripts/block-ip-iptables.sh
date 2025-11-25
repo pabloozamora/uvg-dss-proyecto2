@@ -78,15 +78,22 @@ block_ip() {
     # Log del evento
     logger -t block-ip "Bloqueada IP $ip mediante iptables"
     
-    # Si se especificó duración, crear timer
+    # If duration specified, create timer with error handling
     if [ "$duration" -gt 0 ]; then
-        echo -e "${YELLOW}Bloqueo temporal: $duration segundos${NC}"
+        echo -e "${YELLOW}Temporary block: $duration seconds${NC}"
         (
             sleep "$duration"
-            unblock_ip "$ip"
-            echo -e "${GREEN}Bloqueo temporal de $ip expirado${NC}"
+            if unblock_ip "$ip" 2>/dev/null; then
+                logger -t block-ip "Temporary block of $ip expired and removed successfully"
+                echo -e "${GREEN}Temporary block of $ip expired${NC}"
+            else
+                logger -t block-ip "ERROR: Failed to remove temporary block of $ip"
+                echo -e "${RED}ERROR: Failed to remove temporary block of $ip${NC}" >&2
+            fi
         ) &
-        echo "PID del timer: $!"
+        TIMER_PID=$!
+        echo "Timer PID: $TIMER_PID"
+        logger -t block-ip "Temporary block timer started (PID: $TIMER_PID) for $ip"
     fi
 }
 
@@ -145,22 +152,43 @@ list_rules() {
     iptables -L OUTPUT -n -v --line-numbers | grep -E "(Chain OUTPUT|DROP)"
 }
 
-# Función para limpiar todas las reglas de bloqueo
+# Function to flush all blocking rules
 flush_rules() {
-    echo -e "${YELLOW}¿Eliminar todas las reglas de bloqueo? (s/N)${NC}"
+    echo -e "${YELLOW}Delete all blocking rules? (y/N)${NC}"
     read -r confirm
     
-    if [[ $confirm =~ ^[Ss]$ ]]; then
-        # Eliminar reglas DROP en INPUT
-        iptables -S INPUT | grep "DROP" | cut -d " " -f 2- | xargs -I {} iptables -D {}
+    if [[ $confirm =~ ^[Yy]$ ]]; then
+        # Count rules before deletion
+        drop_count=$(iptables -S INPUT | grep -c "DROP" || echo "0")
         
-        # Eliminar reglas DROP en OUTPUT
-        iptables -S OUTPUT | grep "DROP" | cut -d " " -f 2- | xargs -I {} iptables -D {}
+        if [ "$drop_count" -eq 0 ]; then
+            echo -e "${YELLOW}No DROP rules found in INPUT chain${NC}"
+        else
+            # Delete DROP rules in INPUT with error handling
+            if iptables -S INPUT | grep "DROP" | cut -d " " -f 2- | xargs -I {} iptables -D {} 2>/dev/null; then
+                echo -e "${GREEN}Removed $drop_count rule(s) from INPUT chain${NC}"
+            else
+                echo -e "${RED}Error removing some rules from INPUT chain${NC}" >&2
+            fi
+        fi
         
-        echo -e "${GREEN}Todas las reglas de bloqueo eliminadas${NC}"
-        logger -t block-ip "Todas las reglas de bloqueo fueron eliminadas"
+        # Count rules in OUTPUT
+        drop_count=$(iptables -S OUTPUT | grep -c "DROP" || echo "0")
+        
+        if [ "$drop_count" -eq 0 ]; then
+            echo -e "${YELLOW}No DROP rules found in OUTPUT chain${NC}"
+        else
+            # Delete DROP rules in OUTPUT with error handling
+            if iptables -S OUTPUT | grep "DROP" | cut -d " " -f 2- | xargs -I {} iptables -D {} 2>/dev/null; then
+                echo -e "${GREEN}Removed $drop_count rule(s) from OUTPUT chain${NC}"
+            else
+                echo -e "${RED}Error removing some rules from OUTPUT chain${NC}" >&2
+            fi
+        fi
+        
+        logger -t block-ip "All blocking rules were flushed"
     else
-        echo "Operación cancelada"
+        echo "Operation cancelled"
     fi
 }
 

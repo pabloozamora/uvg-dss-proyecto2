@@ -4,11 +4,13 @@
 
 set -e
 
-NGINX_CONF_DIR="/home/runner/work/uvg-dss-proyecto2/uvg-dss-proyecto2/src/nginx"
+# Use relative path from script location or environment variable
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+NGINX_CONF_DIR="${NGINX_CONF_DIR:-${SCRIPT_DIR}/../nginx}"
 NGINX_CONF="$NGINX_CONF_DIR/default.conf"
 NGINX_CONF_BACKUP="$NGINX_CONF_DIR/default.conf.backup"
 DEBUG_CONF="$NGINX_CONF_DIR/debug.conf"
-CONTAINER_NAME="juice-proxy"
+CONTAINER_NAME="${NGINX_CONTAINER_NAME:-juice-proxy}"
 
 # Colores para output
 RED='\033[0;31m'
