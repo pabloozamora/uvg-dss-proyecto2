@@ -1153,53 +1153,6 @@ Usuario → Juice Shop → Docker Logs → Filebeat → Elasticsearch → Kibana
 
 5. Cuando una alerta se dispara, el analista puede usar Kibana para inspeccionar el evento, revisar el contexto (IP de origen, ruta atacada, payload, usuario afectado) y tomar decisiones: bloquear una IP, ajustar reglas, o recomendar cambios en la aplicación. De esta forma, lo que comenzó como simples logs termina siendo una herramienta de detección y respuesta ante incidentes.
 
-### Decisiones de Diseño
-
-#### Decisión 1: [Título]
-**Contexto**: [Por qué se necesitaba tomar una decisión]
-**Decisión Tomada**: [Cuál se eligió]
-**Justificación**: [Por qué se eligió]
-
-[Repite para otras decisiones importantes]
-
----
-
-## Problemas y Soluciones
-
-### Resumen de Problemas
-
-| Paso | Problema | Solución | Tiempo Perdido |
-|------|----------|----------|----------------|
-| [#] | [Descripción corta] | [Solución corta] | [minutos] |
-
-### Detalle de Problemas Principales
-
-#### Problema 1: [Título]
-
-**Paso**: [En qué paso ocurrió]
-
-**Descripción**: [Descripción detallada]
-
-**Error Exacto**:
-```
-[Mensaje de error]
-```
-
-**Causa Raíz**: [Por qué ocurrió]
-
-**Intentos de Solución**:
-1. [Intento 1] - Resultado: [Funcionó/No funcionó]
-2. [Intento 2] - Resultado: [Funcionó/No funcionó]
-
-**Solución Final**:
-```bash
-[Comandos que resolvieron]
-```
-
-**Lección Aprendida**: [Qué aprendiste]
-
-[Repite para otros problemas importantes]
-
 ---
 
 ## Conclusiones
@@ -1254,31 +1207,24 @@ Finalmente, este trabajo deja una buena base de conocimientos aplicables de inme
 
 ## Anexos
 
-### Anexo A: Comandos Completos
-
-```bash
-# Paso 1: Juice Shop
-git checkout paso-1-juice-shop
-docker compose up -d
-[... todos los comandos ...]
-
-# Paso 2: Elasticsearch
-[... todos los comandos ...]
-
-# [Continuar para todos los pasos]
-```
-
-### Anexo B: Reglas de Detección (JSON)
+### Anexo A: Reglas de Detección (JSON)
 
 ```json
-[Pega el export de reglas de Kibana]
+{"id":"e50ef170-ca33-11f0-9a1c-8bff4fefb87e","updated_at":"2025-11-25T19:21:09.312Z","updated_by":"elastic","created_at":"2025-11-25T19:21:09.312Z","created_by":"elastic","name":"SQL Injection Detection - Nginx","tags":["SQL Injection","Web Attack","OWASP"],"interval":"1m","enabled":true,"revision":0,"description":"Detecta patrones de SQL Injection en request_uri de nginx","risk_score":80,"severity":"high","output_index":"","author":[],"false_positives":[],"from":"now-2m","rule_id":"detect-sqli-002","max_signals":100,"risk_score_mapping":[],"severity_mapping":[],"threat":[],"to":"now","references":[],"version":1,"exceptions_list":[],"immutable":false,"related_integrations":[],"required_fields":[],"setup":"","type":"query","language":"kuery","index":["filebeat-nginx-access-*"],"query":"request_uri: (*OR* or *UNION* or *SELECT* or *INSERT* or *DROP* or *--* or *%27* or *1=1*)","actions":[]}
+
+{"id":"d65252d0-ca4c-11f0-88b4-171c166119f3","updated_at":"2025-11-25T22:19:42.025Z","updated_by":"elastic","created_at":"2025-11-25T22:19:42.025Z","created_by":"elastic","name":"Security Scanner Detection","tags":["Scanner","Reconnaissance","Automated Attack"],"interval":"1m","enabled":true,"revision":0,"description":"Detecta tráfico de herramientas de escaneo (sqlmap, nmap, burp, nikto, etc)","risk_score":60,"severity":"medium","output_index":"","author":[],"false_positives":[],"from":"now-2m","rule_id":"detect-scanner-001","max_signals":100,"risk_score_mapping":[],"severity_mapping":[],"threat":[],"to":"now","references":[],"version":1,"exceptions_list":[],"immutable":false,"related_integrations":[],"required_fields":[],"setup":"","type":"query","language":"kuery","index":["filebeat-nginx-access-*"],"query":"http_user_agent: (*sqlmap* or *nmap* or *burp* or *nikto* or *python-requests* or *Nuclei* or *masscan* or *ZAP* or *Acunetix* or *Nessus*)","actions":[]}
+
+{"id":"e73a92f0-ca52-11f0-88b4-171c166119f3","updated_at":"2025-11-25T23:03:07.725Z","updated_by":"elastic","created_at":"2025-11-25T23:03:07.725Z","created_by":"elastic","name":"Command Injection Detection","tags":["Command Injection","Web Attack","RCE"],"interval":"1m","enabled":true,"revision":0,"description":"Detecta intentos de command injection en URLs","risk_score":90,"severity":"critical","output_index":"","author":[],"false_positives":[],"from":"now-2m","rule_id":"detect-cmdinj-001","max_signals":100,"risk_score_mapping":[],"severity_mapping":[],"threat":[],"to":"now","references":[],"version":1,"exceptions_list":[],"immutable":false,"related_integrations":[],"required_fields":[],"setup":"","type":"query","language":"kuery","index":["filebeat-nginx-access-*"],"query":"request_uri.keyword: *%3B* or request_uri.keyword: *%7C* or request_uri.keyword: *%60*","actions":[]}
+{"id":"b58e9460-ca50-11f0-88b4-171c166119f3","updated_at":"2025-11-25T22:47:24.337Z","updated_by":"elastic","created_at":"2025-11-25T22:47:24.337Z","created_by":"elastic","name":"Brute Force Login Detection","tags":["Brute Force","Authentication","OWASP"],"interval":"1m","enabled":true,"revision":0,"description":"Detecta múltiples intentos fallidos de login en Juice Shop","risk_score":70,"severity":"high","output_index":"","author":[],"false_positives":[],"from":"now-2m","rule_id":"detect-bruteforce-001","max_signals":100,"risk_score_mapping":[],"severity_mapping":[],"threat":[],"to":"now","references":[],"version":1,"exceptions_list":[],"immutable":false,"related_integrations":[],"required_fields":[],"setup":"","type":"threshold","language":"kuery","index":["filebeat-nginx-access-*"],"query":"request_uri: \"/rest/user/login\" and status: 401","threshold":{"field":["remote_addr.keyword"],"value":5},"actions":[]}
+
+{"id":"cc8ca520-ca4c-11f0-88b4-171c166119f3","updated_at":"2025-11-25T22:19:24.803Z","updated_by":"elastic","created_at":"2025-11-25T22:19:24.803Z","created_by":"elastic","name":"XSS Attack Detection","tags":["XSS","Web Attack","OWASP Top 10"],"interval":"1m","enabled":true,"revision":0,"description":"Detecta payloads sospechosos de XSS en URLs y mensajes","risk_score":75,"severity":"high","output_index":"","author":[],"false_positives":[],"from":"now-2m","rule_id":"detect-xss-001","max_signals":100,"risk_score_mapping":[],"severity_mapping":[],"threat":[],"to":"now","references":[],"version":1,"exceptions_list":[],"immutable":false,"related_integrations":[],"required_fields":[],"setup":"","type":"query","language":"kuery","index":["filebeat-nginx-access-*","filebeat-juice-shop-*"],"query":"request_uri:(*%3Cscript* or *%3Cimg* or *javascript* or *onerror* or *alert*)","actions":[]}
+
+{"exported_count":5,"exported_rules_count":5,"missing_rules":[],"missing_rules_count":0,"exported_exception_list_count":0,"exported_exception_list_item_count":0,"missing_exception_list_item_count":0,"missing_exception_list_items":[],"missing_exception_lists":[],"missing_exception_lists_count":0,"exported_action_connector_count":0,"missing_action_connection_count":0,"missing_action_connections":[],"excluded_action_connection_count":0,"excluded_action_connections":[]}
 ```
 
-### Anexo C: Dashboard Export
+### Anexo B: Dashboard Export
 
-```json
-[Pega el export del dashboard]
-```
+![Dashboard final Kibana](./final-dashboard-kibana.jpeg)
 
 ---
 
