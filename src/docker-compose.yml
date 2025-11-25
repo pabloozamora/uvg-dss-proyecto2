@@ -34,7 +34,7 @@ services:
       # Configuraci?n para nodo ?nico (desarrollo)
       - discovery.type=single-node
       # Limita el uso de memoria (ajustar seg?n tu sistema)
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
       # Deshabilita seguridad para simplificar (NO usar en producci?n)
       - xpack.security.enabled=true
       - xpack.security.enrollment.enabled=false
