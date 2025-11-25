@@ -52,6 +52,182 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "XSS",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "kbn-xsrf",
+								"value": "true"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Basic ZWxhc3RpYzpjaGFuZ2VtZQ==",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"rule_id\": \"detect-xss-001\",\n  \"name\": \"XSS Attack Detection\",\n  \"description\": \"Detecta payloads sospechosos de XSS en URLs y mensajes\",\n  \"index\": [\"filebeat-nginx-access-*\", \"filebeat-juice-shop-*\"],\n  \"type\": \"query\",\n  \"language\": \"kuery\",\n  \"severity\": \"high\",\n  \"risk_score\": 75,\n  \"query\": \"request_uri:(*%3Cscript* or *%3Cimg* or *javascript* or *onerror* or *alert*)\",\n  \"interval\": \"1m\",\n  \"from\": \"now-2m\",\n  \"enabled\": true,\n  \"tags\": [\"XSS\", \"Web Attack\", \"OWASP Top 10\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5601/api/detection_engine/rules",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5601",
+							"path": [
+								"api",
+								"detection_engine",
+								"rules"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Command Injection",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "kbn-xsrf",
+								"value": "true"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Basic ZWxhc3RpYzpjaGFuZ2VtZQ==",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"rule_id\": \"detect-cmdinj-001\",\n  \"name\": \"Command Injection Detection\",\n  \"description\": \"Detecta intentos de command injection en URLs\",\n  \"index\": [\"filebeat-nginx-access-*\"],\n  \"type\": \"query\",\n  \"language\": \"kuery\",\n  \"severity\": \"critical\",\n  \"risk_score\": 90,\n  \"query\": \"request_uri.keyword: *%3B* or request_uri.keyword: *%7C* or request_uri.keyword: *%60*\",\n  \"interval\": \"1m\",\n  \"from\": \"now-2m\",\n  \"enabled\": true,\n  \"tags\": [\"Command Injection\", \"Web Attack\", \"RCE\"]\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5601/api/detection_engine/rules",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5601",
+							"path": [
+								"api",
+								"detection_engine",
+								"rules"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Bruteforce Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "kbn-xsrf",
+								"value": "true"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Basic ZWxhc3RpYzpjaGFuZ2VtZQ==",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"rule_id\": \"detect-bruteforce-001\",\n  \"name\": \"Brute Force Login Detection\",\n  \"description\": \"Detecta múltiples intentos fallidos de login en Juice Shop\",\n  \"index\": [\"filebeat-nginx-access-*\"],\n  \"type\": \"threshold\",\n  \"language\": \"kuery\",\n  \"severity\": \"high\",\n  \"risk_score\": 70,\n  \"query\": \"request_uri: \\\"/rest/user/login\\\" and status: 401\",\n  \"interval\": \"1m\",\n  \"from\": \"now-2m\",\n  \"threshold\": {\n    \"field\": \"remote_addr.keyword\",\n    \"value\": 5\n  },\n  \"enabled\": true,\n  \"tags\": [\"Brute Force\", \"Authentication\", \"OWASP\"]\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5601/api/detection_engine/rules",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5601",
+							"path": [
+								"api",
+								"detection_engine",
+								"rules"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Scanner Traffic Detection",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "kbn-xsrf",
+								"value": "true"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Basic ZWxhc3RpYzpjaGFuZ2VtZQ==",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"rule_id\": \"detect-scanner-001\",\n  \"name\": \"Security Scanner Detection\",\n  \"description\": \"Detecta tráfico de herramientas de escaneo (sqlmap, nmap, burp, nikto, etc)\",\n  \"index\": [\"filebeat-nginx-access-*\"],\n  \"type\": \"query\",\n  \"language\": \"kuery\",\n  \"severity\": \"medium\",\n  \"risk_score\": 60,\n  \"query\": \"http_user_agent: (*sqlmap* or *nmap* or *burp* or *nikto* or *python-requests* or *Nuclei* or *masscan* or *ZAP* or *Acunetix* or *Nessus*)\",\n  \"interval\": \"1m\",\n  \"from\": \"now-2m\",\n  \"enabled\": true,\n  \"tags\": [\"Scanner\", \"Reconnaissance\", \"Automated Attack\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5601/api/detection_engine/rules",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5601",
+							"path": [
+								"api",
+								"detection_engine",
+								"rules"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
