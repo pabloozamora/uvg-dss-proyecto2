@@ -1,0 +1,88 @@
+filebeat.inputs:
+  # Input tipo container - especializado para logs de Docker
+  - type: container
+    enabled: true
+    paths:
+      # Lee todos los logs de todos los contenedores
+      - '/var/lib/docker/containers/*/*.log'
+    processors:
+      # Agrega metadata del contenedor (nombre, ID, imagen, etc.)
+      - add_docker_metadata:
+          host: "unix:///var/run/docker.sock"
+      # Decodifica campos JSON en el mensaje
+      - decode_json_fields:
+          fields: ["message"]
+          target: "json"
+          overwrite_keys: true
+
+  # Input específico para logs de nginx (access logs con códigos de estado)
+  - type: log
+    enabled: true
+    paths:
+      - '/var/log/nginx/juice_access.log'
+    json.keys_under_root: true
+    json.add_error_key: true
+
+    # Campos personalizados para identificar el tráfico legítimo
+    fields:
+      service: "nginx-proxy"
+      log_type: "access"
+      service.environment: "lab"
+      service.owner: "blue-team"
+    fields_under_root: true
+
+    processors:
+      # Agregar timestamp si no existe
+      - timestamp:
+          field: "timestamp"
+          layouts:
+            - '2006-01-02T15:04:05-07:00'
+            - '2006-01-02T15:04:05.999-07:00'
+          test:
+            - '2023-05-26T15:04:05+00:00'
+
+# Procesadores globales que se aplican a todos los logs
+processors:
+  # Agrega información del host (hostname, OS, IP)
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+  # Agrega metadata de cloud si está en AWS/GCP/Azure
+  - add_cloud_metadata: ~
+  # Agrega metadata adicional de Docker
+  - add_docker_metadata: ~
+
+# Configuración de salida a Elasticsearch
+output.elasticsearch:
+  # Host de Elasticsearch (usa variable de entorno o default)
+  hosts: ["${ELASTICSEARCH_HOSTS:elasticsearch:9200}"]
+  pipeline: "juice-threat-normalizer"
+
+  # Índices dinámicos basados en el contenedor y tipo de log
+  indices:
+    # Logs de nginx access (con códigos de estado HTTP)
+    - index: "filebeat-nginx-access-%{+yyyy.MM.dd}"
+      when.equals:
+        service: "nginx-proxy"
+    # Logs de Juice Shop van a su propio índice
+    - index: "filebeat-juice-shop-%{+yyyy.MM.dd}"
+      when.contains:
+        container.name: "juice-shop"
+    # Todos los demás logs van a índice general
+    - index: "filebeat-docker-%{+yyyy.MM.dd}"
+
+# Configuración de Kibana para dashboards
+setup.kibana:
+  host: "${KIBANA_HOST:kibana:5601}"
+
+# Deshabilita la carga automática de dashboards para evitar fallos de inicio
+# Se puede habilitar manualmente una vez que Kibana esté corriendo
+setup.dashboards.enabled: false
+
+# Configuración de logging de Filebeat
+logging.level: info
+logging.to_files: true
+logging.files:
+  path: /var/log/filebeat
+  name: filebeat
+  keepfiles: 7
+  permissions: 0644

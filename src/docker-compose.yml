@@ -1,0 +1,121 @@
+services:
+  
+  juice-proxy:
+    image: nginx:1.25
+    container_name: juice-proxy
+    depends_on:
+      juice-shop:
+        condition: service_started
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - proxy-logs:/var/log/nginx
+    networks:
+      - elk-network
+
+  # Aplicaci?n Juice Shop - Aplicaci?n web vulnerable para testing
+  juice-shop:
+    build: .
+    container_name: juice-shop
+    ports:
+      - "3000:3000"  # Mapea el puerto 3000 del contenedor al host
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    networks:
+      - elk-network  # Conecta a la red compartida
+
+  # Elasticsearch - Motor de b?squeda y almacenamiento de logs
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: elasticsearch
+    environment:
+      # Configuraci?n para nodo ?nico (desarrollo)
+      - discovery.type=single-node
+      # Limita el uso de memoria (ajustar seg?n tu sistema)
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      # Deshabilita seguridad para simplificar (NO usar en producci?n)
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+    ports:
+      - "9200:9200"  # Puerto HTTP API
+      - "9300:9300"  # Puerto de comunicaci?n entre nodos
+    volumes:
+      # Persiste los datos de Elasticsearch
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    networks:
+      - elk-network
+    restart: unless-stopped
+    healthcheck:
+      # Verifica que Elasticsearch est? respondiendo
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Kibana - Interfaz de visualizaci?n para Elasticsearch
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: kibana
+    ports:
+      - "5601:5601"  # Puerto web de Kibana
+    environment:
+      # URL de conexi?n a Elasticsearch
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    networks:
+      - elk-network
+    depends_on:
+      elasticsearch:
+        condition: service_healthy  # Espera a que Elasticsearch est? listo
+    restart: unless-stopped
+    healthcheck:
+      # Verifica que Kibana est? respondiendo
+      test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Filebeat - Recolector de logs de Docker
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.11.0
+    container_name: filebeat
+    user: root  # Necesario para leer logs de Docker
+    volumes:
+      # Configuraci?n de Filebeat
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      # Logs de contenedores Docker
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      # Socket de Docker para metadata
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Logs de nginx proxy (access logs con códigos de estado)
+      - proxy-logs:/var/log/nginx:ro
+      # Datos de Filebeat (registry, estado)
+      - filebeat-data:/usr/share/filebeat/data
+    environment:
+      # Conexi?n a Elasticsearch
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      # Conexi?n a Kibana para dashboards
+      - KIBANA_HOST=http://kibana:5601
+    networks:
+      - elk-network
+    depends_on:
+      elasticsearch:
+        condition: service_healthy  # Espera a que Elasticsearch est? listo
+    restart: unless-stopped
+    command: filebeat -e -strict.perms=false
+
+# Definici?n de redes
+networks:
+  elk-network:
+    driver: bridge
+
+# Definici?n de vol?menes persistentes
+volumes:
+  elasticsearch-data:
+    driver: local
+  filebeat-data:
+    driver: local
+  proxy-logs:
+    driver: local
