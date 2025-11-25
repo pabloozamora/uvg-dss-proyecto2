@@ -586,24 +586,122 @@ container.name: ("juice-shop" OR "kibana")
 **Configuración**:
 - Name: Detección SQL Injection
 - Type: Custom query
-- Query: `url.original:("*' or 1=1*" or "*union select*")`
+- Query: `request_uri: (OR or UNION or SELECT or INSERT or DROP or -- or %27 or 1=1)`
+- Severity: High
+- Risk score: 80
+
+**Prueba**:
+```bash
+curl "http://localhost:8080/rest/products/search?q=' OR '1'='1"
+```
+
+**Resultado**:
+Sí fue posible detectar el intento de ataque por SQL injection, levantando la alerta correspondiente.
+
+**Limitaciones**:
+
+Esta regla es muy sensible porque dispara solo por ver palabras clave de SQL en cualquier parte del request_uri. Cualquier tutorial, documentación o foro donde los usuarios hablen de consultas SQL legítimas puede generar alertas. Además, el -- se usa en muchas URLs como separador visual, no necesariamente como comentario SQL. Incluir %27 (comilla simple codificada) también puede generar ruido, porque es un carácter frecuente en textos naturales. Sin contexto de parámetros, método HTTP, destino (/rest/products/search vs /blog/...) o frecuencia por IP, la regla genera muchos falsos positivos, especialmente en sitios educativos, foros de desarrolladores o aplicaciones con contenido técnico. Es útil como primera señal, pero necesita correlación o condiciones adicionales para que sea realmente accionable.
+
+Ejemplo de falsos positivo:
+
+```bash
+curl "/rest/products/search?q=how+to+select+the+best+product"
+```
+
+
+#### Regla 2: Detección de XSS
+
+**Configuración**:
+- Name: Detección SQL Injection
+- Type: Custom query
+- Query: `request_uri:(%3Cscript or %3Cimg or javascript or onerror or alert)`
 - Severity: High
 - Risk score: 75
 
 **Prueba**:
 ```bash
-curl "http://localhost:3000/rest/products/search?q=' OR 1=1 --"
+curl "http://localhost:8080/rest/products/search?q=<script>alert('xss')</script>"
 ```
 
-**Resultado**: [Describe si se detectó]
+**Resultado**:
+Fue posible detectar el intento de ataque XSS.
 
-#### Regla 2: Detección de XSS
+**Limitaciones**:
 
-[Sigue el mismo formato]
+La regla es demasiado genérica, ya que salta solo por ver cadenas como javascript, alert o %3Cimg, que aparecen en contenido legítimo de desarrollo web, documentación, laboratorios y blogs, generando muchas falsas alarmas.
 
-#### Regla 3: Detección de Scanning
+Además, no toma en cuenta el contexto del payload (ruta, parámetro, tipo de usuario, frecuencia o código de respuesta HTTP), ni diferencia entre campos pensados para código (como un editor de snippets) y campos normales.
+Sin ese contexto, la señal de XSS es muy ruidosa. Lo ideal es combinar estas cadenas con rutas específicas de la app, parámetros sospechosos (q, search, comment, etc.) y, si se puede, con errores o comportamientos anómalos en la respuesta.
 
-[Sigue el mismo formato]
+Ejemplo de falso positivo:
+
+```bash
+curl "/blog/xss?example=%3Cscript%3Ealert('test')%3C/script%3E"
+```
+
+#### Regla 3: Regla Brute Force
+
+**Configuración**:
+- Name: Detección Brute force
+- Type: Custom query
+- Query: `(message: (Invalid email or password or 401 or authentication failed)) or (request_uri: /rest/user/login and status: 401)`
+- Severity: High
+- Risk score: 70
+
+**Prueba**:
+```# Intentos fallidos de login
+for i in {1..10}; do
+  curl -X POST "http://localhost:8080/rest/user/login" \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"admin@juice-sh.op\",\"password\":\"wrongpass$i\"}"
+  sleep 1
+done
+```
+
+**Resultado**:
+Fue posible detectar el intento de acceso por medio de fuerza bruta.
+
+**Limitaciones**:
+
+La regla solo busca mensajes de error de autenticación o respuestas 401 sin agrupar por IP/usuario ni aplicar umbrales de frecuencia. Así, cualquier fallo de login aislado puede dispararla, y esos mismos mensajes pueden aparecer en contextos legítimos (por ejemplo, APIs internas).
+
+Sin lógica de agregación como “más de N fallos de login desde la misma IP o usuario en T minutos”, habrá mucho ruido por usuarios que se equivocan, integraciones mal configuradas o pruebas. Para que indique realmente un brute force, la regla debería añadir conteos y límites por IP, usuario y ventana de tiempo.
+
+Ejemplo de falso positivo:
+
+Usuario que se equivoca varias veces en su email o contraseña.
+```bash
+curl "/rest/user/login HTTP/1.1"
+```
+
+#### Regla 3: Traffic Scanner
+
+**Configuración**:
+- Name: Detección Brute force
+- Type: Custom query
+- Query: `http_user_agent: (sqlmap or nmap or burp or nikto or python-requests or Nuclei or masscan or ZAP or Acunetix or Nessus)`
+- Severity: medium
+- Risk score: 60
+
+**Prueba**:
+```curl -A "sqlmap/1.7.2" "http://localhost:8080/rest/products/search?q=test"
+```
+
+**Resultado**:
+Fue posible detectar escaneos de tráfico.
+
+**Limitaciones**:
+
+La regla marca como malicioso cualquier User-Agent de escaneo, aunque suela ser tráfico interno legítimo o monitorización. Además, un atacante puede cambiar fácilmente el User-Agent y evadirla. Sirve como indicio de reconocimiento automatizado, pero necesita cruzarse con horarios de mantenimiento, IP internas, listas de escaneos permitidos y otras señales para distinguir entre escaneo autorizado y ataque real.
+
+Ejemplo de falso positivo:
+
+Equipo interno de seguridad ejecutando un escaneo autorizado con Burp o sqlmap
+
+```bash
+GET / HTTP/1.1
+User-Agent: sqlmap/1.6.12#stable
+```
 
 ### Red Team: DAST
 
