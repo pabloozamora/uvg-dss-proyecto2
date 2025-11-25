@@ -1264,7 +1264,6 @@ Finalmente, este trabajo deja una buena base de conocimientos aplicables de inme
 ### Archivos
 - [x] reporte-final.pdf o .md
 - [x] screenshots/ organizado
-- [ ] comandos.txt
 - [x] reglas-deteccion.json
 - [x] dashboard-export.ndjson
 
