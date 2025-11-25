@@ -36,8 +36,13 @@ services:
       # Limita el uso de memoria (ajustar seg?n tu sistema)
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
       # Deshabilita seguridad para simplificar (NO usar en producci?n)
-      - xpack.security.enabled=false
+      - xpack.security.enabled=true
       - xpack.security.enrollment.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+      # Credenciales por defecto
+      - ELASTIC_PASSWORD=changeme
+      - xpack.license.self_generated.type=trial
     ports:
       - "9200:9200"  # Puerto HTTP API
       - "9300:9300"  # Puerto de comunicaci?n entre nodos
@@ -49,7 +54,7 @@ services:
     restart: unless-stopped
     healthcheck:
       # Verifica que Elasticsearch est? respondiendo
-      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      test: ["CMD-SHELL", "curl -f -u elastic:changeme http://localhost:9200/_cluster/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -59,19 +64,16 @@ services:
     image: docker.elastic.co/kibana/kibana:8.11.0
     container_name: kibana
     ports:
-      - "5601:5601"  # Puerto web de Kibana
-    environment:
-      # URL de conexi?n a Elasticsearch
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - "5601:5601"
+    volumes:
+      - ./kibana.yml:/usr/share/kibana/config/kibana.yml:ro  # Añadir esto
     networks:
       - elk-network
     depends_on:
       elasticsearch:
-        condition: service_healthy  # Espera a que Elasticsearch est? listo
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      # Verifica que Kibana est? respondiendo
       test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status || exit 1"]
       interval: 30s
       timeout: 10s

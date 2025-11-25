@@ -25,10 +25,11 @@ filebeat.inputs:
 
     # Campos personalizados para identificar el tráfico legítimo
     fields:
-      service: "nginx-proxy"
+      service:
+        name: "nginx-proxy"
+        environment: "lab"
+        owner: "blue-team"
       log_type: "access"
-      service.environment: "lab"
-      service.owner: "blue-team"
     fields_under_root: true
 
     processors:
@@ -55,6 +56,8 @@ processors:
 output.elasticsearch:
   # Host de Elasticsearch (usa variable de entorno o default)
   hosts: ["${ELASTICSEARCH_HOSTS:elasticsearch:9200}"]
+  username: "elastic"
+  password: "changeme"
   pipeline: "juice-threat-normalizer"
 
   # Índices dinámicos basados en el contenedor y tipo de log
@@ -62,7 +65,7 @@ output.elasticsearch:
     # Logs de nginx access (con códigos de estado HTTP)
     - index: "filebeat-nginx-access-%{+yyyy.MM.dd}"
       when.equals:
-        service: "nginx-proxy"
+        service.name: "nginx-proxy"
     # Logs de Juice Shop van a su propio índice
     - index: "filebeat-juice-shop-%{+yyyy.MM.dd}"
       when.contains:
