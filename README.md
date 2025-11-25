@@ -127,15 +127,17 @@ docker compose logs -f filebeat
 
 ### Credenciales por Defecto
 
+⚠️ **ADVERTENCIA DE SEGURIDAD**: Las credenciales por defecto son débiles y solo apropiadas para desarrollo/educación. **NUNCA uses estas credenciales en producción**. Cambia la contraseña inmediatamente en entornos expuestos.
+
 - **Elasticsearch**:
   - Usuario: `elastic`
-  - Contraseña: `changeme`
+  - Contraseña: `changeme` (⚠️ CAMBIAR EN PRODUCCIÓN)
   - URL: `http://localhost:9200`
 
 - **Kibana**:
   - URL: `http://localhost:5601`
   - Usuario: `elastic`
-  - Contraseña: `changeme`
+  - Contraseña: `changeme` (⚠️ CAMBIAR EN PRODUCCIÓN)
 
 ### Configuración de Filebeat
 

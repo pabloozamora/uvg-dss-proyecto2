@@ -38,6 +38,8 @@ Una vez completado el script, accede a:
 - **Usuario**: `elastic`
 - **Contraseña**: `changeme`
 
+⚠️ **NOTA DE SEGURIDAD**: La contraseña por defecto es débil y solo apropiada para entornos de desarrollo/aprendizaje. Si planeas exponer el sistema a la red, cambia las credenciales siguiendo las instrucciones en la sección de [Configuración Avanzada](#configuración-avanzada).
+
 ---
 
 ## 🔧 Instalación Manual

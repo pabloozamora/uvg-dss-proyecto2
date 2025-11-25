@@ -88,8 +88,22 @@ PORTS=(3000 5601 8080 9200 9300)
 PORTS_IN_USE=()
 
 for PORT in "${PORTS[@]}"; do
-    if lsof -Pi :$PORT -sTCP:LISTEN -t >/dev/null 2>&1 || netstat -tuln 2>/dev/null | grep -q ":$PORT "; then
-        PORTS_IN_USE+=($PORT)
+    # Intentar con lsof, ss, o netstat (el que esté disponible)
+    if command -v lsof &> /dev/null; then
+        if lsof -Pi :$PORT -sTCP:LISTEN -t >/dev/null 2>&1; then
+            PORTS_IN_USE+=($PORT)
+        fi
+    elif command -v ss &> /dev/null; then
+        if ss -tuln 2>/dev/null | grep -q ":$PORT "; then
+            PORTS_IN_USE+=($PORT)
+        fi
+    elif command -v netstat &> /dev/null; then
+        if netstat -tuln 2>/dev/null | grep -q ":$PORT "; then
+            PORTS_IN_USE+=($PORT)
+        fi
+    else
+        print_warning "No se pudo verificar puertos (lsof, ss o netstat no disponibles)"
+        break
     fi
 done
 
@@ -136,11 +150,19 @@ fi
 
 # Preguntar si quiere limpiar contenedores anteriores
 print_header "Limpieza (Opcional)"
-read -p "¿Quieres eliminar contenedores y volúmenes anteriores? (s/n) " -n 1 -r
+read -p "¿Quieres eliminar contenedores anteriores? (s/n) " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Ss]$ ]]; then
     print_info "Deteniendo contenedores existentes..."
-    docker compose down -v 2>/dev/null || true
+    docker compose down 2>/dev/null || true
+    
+    read -p "¿También eliminar volúmenes (ESTO BORRARÁ TODOS LOS DATOS)? (s/n) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Ss]$ ]]; then
+        print_warning "Eliminando volúmenes..."
+        docker compose down -v 2>/dev/null || true
+        print_success "Volúmenes eliminados"
+    fi
     print_success "Limpieza completada"
 fi
 
@@ -158,12 +180,25 @@ print_header "Esperando a que los Servicios Estén Listos"
 
 print_info "Esto puede tomar 2-3 minutos. Por favor espera..."
 
+# Verificar que curl esté disponible
+if ! command -v curl &> /dev/null; then
+    print_warning "curl no está instalado. Se omitirá la verificación de servicios."
+    print_info "Instala curl con: sudo apt-get install curl (Debian/Ubuntu) o sudo yum install curl (RHEL/CentOS)"
+    SKIP_CHECKS=true
+else
+    SKIP_CHECKS=false
+fi
+
 # Función para verificar si un servicio está listo
 check_service() {
     local service=$1
     local url=$2
     local max_attempts=30
     local attempt=0
+
+    if [ "$SKIP_CHECKS" = true ]; then
+        return 0
+    fi
 
     while [ $attempt -lt $max_attempts ]; do
         if curl -s -f "$url" > /dev/null 2>&1; then
