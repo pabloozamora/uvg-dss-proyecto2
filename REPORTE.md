@@ -605,6 +605,23 @@ curl "http://localhost:3000/rest/products/search?q=' OR 1=1 --"
 
 [Sigue el mismo formato]
 
+### Red Team: DAST
+
+Se efectuaron tres tipos de escaneo con OWASP ZAP: automatizado, activo y manual. Asimismo, se ejecutaron las herramientas Spider y AJAX Spider, utilizando credenciales válidas de autenticación para permitirles explorar más allá de la página de inicio de sesión. Durante los escaneos se encontraron 683 URLs únicas y se realizaron 7724 peticiones:
+
+![Manual scan](./red-team/manual-scan.PNG)
+![Spider scan](./red-team/spider-scan.PNG)
+![AJAX spider](./red-team/ajax-scan.PNG)
+![Active scan](./red-team/active-scan.PNG)
+
+Luego de recorrer las páginas del frontend y realizar las múltiples solicitudes al backend, se encontró 1 alerta de alta prioridad, 10 de prioridad media, 9 de baja prioridad y 6 informativas.
+
+![Warnings](./red-team/scan-warnings.PNG)
+
+- La alerta de alta prioridad indica la posibilidad de inyección SQL (SQLi) en los endpoints `/rest/user/login` y `/rest/product/search?q=`.
+- Las alertas de prioridad media indican, sobre todo, los problemas derivados de la ausencia de una Content Security Policy (CSP).
+- Las alertas de baja prioridad indican las posibles vulnerabilidades debido a problemas con encabezados ausentes en las solicitudes, cookies mal configuradas y archivos de código fuente expuestos.
+
 ### Red Team: Vulnerabilidades Explotadas
 
 #### Vulnerabilidad 1: Exposición de rutas
@@ -1018,18 +1035,33 @@ curl -X POST "http://juiceshop:3000/api/BasketItems/" \
 
 ### Verificación de Éxito
 - [ ] 3 reglas de detección configuradas
-- [ ] 4 vulnerabilidades explotadas
+- [x] 4 vulnerabilidades explotadas
 - [ ] Alertas generadas
 - [ ] Dashboard de detecciones creado
 - [ ] 12 screenshots capturados
-- [ ] Vulnerabilidades con CVSS calculado
+- [x] Vulnerabilidades con CVSS calculado
 
 ### Conceptos Aprendidos
 1. **Reglas de Detección**: [Explica]
-2. **SQL Injection**: [Explica]
-3. **XSS**: [Explica]
-4. **CVSS Scoring**: [Explica]
-5. **OWASP Top 10**: [Explica]
+
+2. **SQL Injection**: SQL Injection (SQLi) es una vulnerabilidad que ocurre cuando una aplicación inserta directamente datos proporcionados por el usuario dentro de una consulta SQL sin sanitización ni validación adecuada.
+Esto permite que un atacante inyecte código SQL malicioso, alterando la lógica original de la consulta.
+
+3. **XSS**: Cross-Site Scripting (XSS) es una vulnerabilidad que permite a un atacante inyectar código JavaScript en una página vista por otros usuarios. Es posible cuando la aplicación refleja o almacena contenido del usuario sin escapar ni validar correctamente los caracteres especiales. En el XSS Reflejado, el payload vuelve inmediatamente en la respuesta. Se explota mediante enlaces maliciosos o parámetros manipulados.
+
+4. **Improper Input Validation**: Ocurre cuando el backend no valida adecuadamente los datos, permitiendo valores absurdos, negativos, demasiado grandes, o formatos incorrectos.
+
+5. **CVSS Scoring**: El Common Vulnerability Scoring System (CVSS) es un estándar internacional para medir la severidad de una vulnerabilidad. Evalúa varias métricas:
+  - AV (Attack Vector): dónde puede explotarse (network, local, etc.).
+  - AC (Attack Complexity): qué tan difícil es explotar.
+  - PR (Privileges Required): si el atacante necesita autenticarse.
+  - UI (User Interaction): si requiere acción de la víctima.
+  - S (Scope): si se afecta otro componente distinto.
+  - C (Confidentiality): impacto en confidencialidad.
+  - I (Integrity): impacto en integridad.
+  - A (Availability): impacto en disponibilidad.
+
+6. **OWASP Top 10**: El OWASP Top 10 es una clasificación mantenida por OWASP que lista los diez riesgos más críticos de seguridad en aplicaciones web. Cada categoría agrupa vulnerabilidades comunes basadas en impacto, explotación y frecuencia en el mundo real.
 
 ---
 
