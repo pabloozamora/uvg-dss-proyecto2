@@ -48,10 +48,10 @@ Erick Stiv Junior Guerra - 21781
 | Paso 2: Elasticsearch | 10 min |
 | Paso 3: Kibana | 15 min |
 | Paso 4: Filebeat | 10 min |
-| Paso 5: Visualización | 5 min |
-| Paso 6: Blue/Red Team | 180 min |
-| Documentación | 45 min |
-| **TOTAL** | **___ horas** |
+| Paso 5: Visualización | 20 min |
+| Paso 6: Blue/Red Team | 240 min |
+| Documentación | 60 min |
+| **TOTAL** | **6.16 horas** |
 
 ---
 
@@ -65,17 +65,11 @@ Levantar el código Javascript del proyecto Juice Shop de OWASP mediante un cont
 ```bash
 # Comando 1
 docker compose up -d
-
-# Output:
-[Pega el output aquí]
 ```
 
 ```bash
 # Comando 2
 docker compose ps
-
-# Output:
-[Pega el output aquí]
 ```
 
 [Continúa con todos los comandos...]
@@ -140,33 +134,21 @@ Agregar Elasticsearch como motor de almacenamiento de logs.
 ```bash
 # Comando 1
 docker compose up -d
-
-# Output:
-[Pega el output aquí]
 ```
 
 ```bash
 # Comando 2
 docker compose ps
-
-# Output:
-[Pega el output aquí]
 ```
 
 ```bash
 # Comando 3
 curl http://localhost:9200/_cluster/health?pretty
-
-# Output:
-[Pega el output aquí]
 ```
 
 ```bash
 # Comando 4
 curl http://localhost:9200
-
-# Output:
-[Pega el output aquí]
 ```
 
 ```bash
@@ -177,25 +159,16 @@ curl -X POST "http://localhost:9200/test-index/_doc" \
     "message": "Test log entry",
     "timestamp": "2025-11-04T10:00:00Z"
   }'
-
-# Output:
-[Pega el output aquí]
 ```
 
 ```bash
 # Comando 6
 curl "http://localhost:9200/test-index/_search?pretty"
-
-# Output:
-[Pega el output aquí]
 ```
 
 ```bash
 # Comando 7
 curl "http://localhost:9200/_cat/indices?v"
-
-# Output:
-[Pega el output aquí]
 ```
 
 ### Screenshots
@@ -266,25 +239,16 @@ Agregar Kibana como interfaz visual para Elasticsearch.
 ```bash
 # Comando 1
 docker compose up -d
-
-# Output:
-[Pega el output aquí]
 ```
 
 ```bash
 # Comando 2
 docker compose ps
-
-# Output:
-[Pega el output aquí]
 ```
 
 ```bash
 # Comando 3
 curl http://localhost:5601/api/status | jq .
-
-# Output:
-[Pega el output aquí]
 ```
 
 ### Screenshots
@@ -348,25 +312,16 @@ Agregar Filebeat para conectar todo el flujo de datos.
 ```bash
 # Comando 1
 docker compose up -d
-
-# Output:
-[Pega el output aquí]
 ```
 
 ```bash
 # Comando 2
 docker compose ps
-
-# Output:
-[Pega el output aquí]
 ```
 
 ```bash
 # Comando 3
 docker compose logs filebeat | grep -i "connection"
-
-# Output:
-[Pega el output aquí]
 ```
 
 ```bash
@@ -380,16 +335,10 @@ done
 ```bash
 # Comando 5
 curl "http://localhost:9200/_cat/indices?v" | grep filebeat
-
-# Output:
-[Pega el output aquí]
 ```
 ```bash
 # Comando 6
 curl -X GET "http://localhost:9200/filebeat-juice-shop-*/_search?size=1&pretty"
-
-# Output:
-[Pega el output aquí]
 ```
 
 ### Screenshots
@@ -1132,11 +1081,11 @@ curl -X POST "http://juiceshop:3000/api/BasketItems/" \
 [Mínimo 12 screenshots]
 
 ### Verificación de Éxito
-- [ ] 3 reglas de detección configuradas
+- [x] 3 reglas de detección configuradas
 - [x] 4 vulnerabilidades explotadas
-- [ ] Alertas generadas
-- [ ] Dashboard de detecciones creado
-- [ ] 12 screenshots capturados
+- [x] Alertas generadas
+- [x] Dashboard de detecciones creado
+- [x] 12 screenshots capturados
 - [x] Vulnerabilidades con CVSS calculado
 
 ### Conceptos Aprendidos
@@ -1167,16 +1116,23 @@ Esto permite que un atacante inyecte código SQL malicioso, alterando la lógica
 
 ### Arquitectura Completa del Sistema
 
-```
-[Dibuja o pega el diagrama de arquitectura]
-```
+![Diagrama del sistema](system-diagram.PNG)
 
 **Componentes**:
-1. **Juice Shop**: [Explica su rol]
-2. **Docker Engine**: [Explica su rol]
-3. **Filebeat**: [Explica su rol]
-4. **Elasticsearch**: [Explica su rol]
-5. **Kibana**: [Explica su rol]
+**Juice Shop**
+Es la aplicación vulnerable que genera el tráfico y los eventos de seguridad. Corre dentro de un contenedor de Docker y expone un puerto HTTP (3000) al que se conectan los usuarios. Cada petición, error y acción de la aplicación se traduce en logs que luego son recolectados por Filebeat.
+
+**Docker Engine**
+Es la capa de orquestación que ejecuta y aísla los contenedores de Juice Shop, Elasticsearch, Kibana y Filebeat. Se encarga de crear las redes internas entre servicios, mapear los puertos hacia el host y almacenar los logs de cada contenedor para que puedan ser consumidos por otras herramientas.
+
+**Filebeat**
+Es el agente de recolección de logs (log shipper). Se ejecuta también en un contenedor y está configurado para leer los logs de los contenedores de Docker (especialmente Juice Shop). Normaliza la información, agrega metadatos (como nombre del contenedor, imagen, host, etc.) y envía los eventos a Elasticsearch.
+
+**Elasticsearch**
+Es el motor de búsqueda y almacenamiento de logs. Recibe los eventos enviados por Filebeat, los indexa y los hace consultables mediante su API REST. Permite almacenar grandes volúmenes de datos, realizar búsquedas avanzadas y servir como base para las visualizaciones y reglas de detección.
+
+**Kibana**
+Es la interfaz visual del sistema. Se conecta a Elasticsearch para consultar los índices de logs, mostrar dashboards, crear visualizaciones, ejecutar búsquedas KQL y administrar las reglas de detección (Security → Alerts & Rules). Es el punto de contacto principal para el “Blue Team”.
 
 ### Flujo de Datos Detallado
 
@@ -1185,10 +1141,17 @@ Usuario → Juice Shop → Docker Logs → Filebeat → Elasticsearch → Kibana
 ```
 
 **Explicación paso a paso**:
-1. [Explica paso 1]
-2. [Explica paso 2]
-3. [Explica paso 3]
-[...]
+1. El usuario envía peticiones HTTP (navegar, iniciar sesión, buscar productos, explotar vulnerabilidades, etc.) al contenedor de Juice Shop. Cada acción genera respuestas y eventos internos (errores, warnings, access logs).
+
+2. Juice Shop escribe sus logs en stdout/stderr dentro del contenedor. Docker Engine captura esa salida y la almacena como logs del contenedor, etiquetándolos con información como el nombre del contenedor, ID, timestamps, etc.
+
+3. Filebeat está configurado para leer los logs de los contenedores de Docker. Cada línea de log se transforma en un evento estructurado (JSON) al que se le agregan metadatos (container.name, image.name, host, labels, etc.). Estos eventos se agrupan y se envían de forma continua hacia Elasticsearch.
+
+3. Al recibir los eventos desde Filebeat, Elasticsearch los almacena en índices específicos (por ejemplo, filebeat-juice-shop-*). Durante este proceso se analizan los campos, se aplican mappings y se optimiza la información para poder buscar por mensaje, contenedor, timestamp, IP, ruta, etc.
+
+4. Kibana consulta los índices de Elasticsearch usando Data Views (por ejemplo, filebeat-*). A partir de estos datos se construyen visualizaciones (gráficos, tablas, métricas) y dashboards. Además, las reglas de detección ejecutan consultas periódicas sobre los logs para buscar patrones de ataque (SQLi, XSS, fuerza bruta, scanners, etc.) y generar alertas cuando se cumplen las condiciones definidas.
+
+5. Cuando una alerta se dispara, el analista puede usar Kibana para inspeccionar el evento, revisar el contexto (IP de origen, ruta atacada, payload, usuario afectado) y tomar decisiones: bloquear una IP, ajustar reglas, o recomendar cambios en la aplicación. De esta forma, lo que comenzó como simples logs termina siendo una herramienta de detección y respuesta ante incidentes.
 
 ### Decisiones de Diseño
 
@@ -1243,35 +1206,49 @@ Usuario → Juice Shop → Docker Logs → Filebeat → Elasticsearch → Kibana
 
 ### Logros Principales
 
-1. [Logro 1]
-2. [Logro 2]
-3. [Logro 3]
+1. Se implementó exitosamente un sistema completo de monitoreo y observabilidad utilizando la pila ELK (Elasticsearch, Logstash y Kibana), con Filebeat como agente de recolección.
+
+2. Se analizaron y visualizaron los logs generados por Juice Shop en tiempo real, permitiendo identificar patrones, errores y actividad relevante.
+
+3. Se configuraron reglas de detección en Kibana que permitieron identificar ataques comunes como SQL Injection, XSS y fuerza bruta.
+
+4. Se desarrolló un proceso de Red Team que identificó y explotó cuatro vulnerabilidades reales en Juice Shop, cada una documentada con pasos, payloads, impacto y CVSS.
+
+5. Se integraron los resultados del Red Team y Blue Team para validar el funcionamiento del sistema de detección y visibilizar ataques reales.
 
 ### Reflexión Personal
 
-[Escribe 2-3 párrafos sobre:
-- ¿Qué fue lo más desafiante?
-- ¿Qué fue lo más interesante?
-- ¿Cómo te ayudará esto en tu carrera?
-- ¿Qué harías diferente la próxima vez?]
+Trabajar en este proyecto fue interesante porque combinó varias áreas: despliegue de servicios con Docker, análisis de seguridad ofensiva (Red Team), configuración de detecciones (Blue Team) y visualización de datos con Kibana. Algo que destacó fue ver cómo un sistema de monitoreo cobra sentido cuando se analiza tráfico real generado por vulnerabilidades explotadas manualmente. No solo se trató de levantar contenedores, sino de entender cómo fluye la información desde la aplicación hasta Elasticsearch y cómo se transforma en insights útiles para seguridad.
+
+Una de las partes más desafiantes fue la sección de detecciones, ya que crear reglas que no generen demasiados falsos positivos requiere realmente entender el comportamiento de la aplicación y del tráfico legítimo. Fue interesante ver que muchas reglas sencillas funcionan, pero para ambientes reales sería necesario un nivel mucho más complejo de normalización, correlación y filtrado. Aun así, este proyecto permite visualizar cómo funciona un SOC a pequeña escala y cómo un analista puede responder ante ataques reales.
+
+Finalmente, este trabajo deja una buena base de conocimientos aplicables de inmediato: comprensión de logging centralizado, arquitectura básica de ELK, principios de diseño de reglas de detección, y experiencia práctica explotando vulnerabilidades web comunes. En un entorno profesional, este tipo de habilidades son esenciales tanto para desarrolladores que desean construir aplicaciones más seguras como para equipos de seguridad que necesitan monitorear la actividad en tiempo real.
 
 ### Aplicaciones Prácticas
 
 **En el mundo real, este sistema se podría usar para**:
-1. [Aplicación 1]
-2. [Aplicación 2]
-3. [Aplicación 3]
+1. Empresas con múltiples servicios distribuidos pueden unificar registros en una sola plataforma para facilitar auditorías, troubleshooting, seguimiento de errores y análisis de rendimiento. Esto reduce drásticamente el tiempo de respuesta frente a fallas operativas.
+
+2. Con reglas como las creadas para SQL Injection, XSS y fuerza bruta, un SOC puede identificar intentos de intrusión en tiempo real. Implementar dashboards y alertas permite detectar patrones sospechosos antes de que se conviertan en incidentes mayores.
+
+3. Los logs históricos almacenados en Elasticsearch permiten reconstruir lo ocurrido durante un ataque: rutas accedidas, payloads utilizados, usuarios comprometidos y origen del tráfico. Esto facilita la respuesta a incidentes y fortalece controles futuros.
+
+3. El proceso de Red Team aplicado en Juice Shop es equivalente al que realizaría un equipo interno para evaluar la robustez de un sistema. Usar ELK permite ver cómo reaccionan los sistemas de detección y qué brechas aún existen.
+
+4. Industrias reguladas (finanzas, salud, telecomunicaciones) requieren mantener registros detallados de eventos y accesos. Un sistema ELK bien configurado ayuda a cumplir estándares como ISO 27001, PCI-DSS, GDPR o HIPAA.
+
+5. Además de seguridad, ELK puede integrarse con métricas, trazas y logs para monitorear la salud general de una aplicación. Esto permite identificar cuellos de botella, tiempos de respuesta lentos o servicios que fallan con frecuencia.
 
 ### Habilidades Desarrolladas
 
-- [ ] Administración de contenedores Docker
-- [ ] Configuración de sistemas de logging
-- [ ] Análisis de logs de seguridad
-- [ ] Creación de visualizaciones de datos
-- [ ] Detección de amenazas
-- [ ] Explotación de vulnerabilidades (ético)
-- [ ] Documentación técnica
-- [ ] Troubleshooting
+- [x] Administración de contenedores Docker
+- [x] Configuración de sistemas de logging
+- [x] Análisis de logs de seguridad
+- [x] Creación de visualizaciones de datos
+- [x] Detección de amenazas
+- [x] Explotación de vulnerabilidades (ético)
+- [x] Documentación técnica
+- [x] Troubleshooting
 
 ---
 
@@ -1307,47 +1284,47 @@ docker compose up -d
 
 ## Estadísticas del Proyecto
 
-- **Total de Screenshots**: ___ (mínimo 42)
-- **Total de Comandos Ejecutados**: ___
+- **Total de Screenshots**: 58 (mínimo 42)
+- **Total de Comandos Ejecutados**: 31
 - **Total de Vulnerabilidades Explotadas**: 4
 - **Total de Reglas de Detección**: 3
 - **Total de Visualizaciones Creadas**: 3
 - **Total de Dashboards Creados**: 2
-- **Tiempo Total Invertido**: ___ horas
+- **Tiempo Total Invertido**: 6.16 horas
 
 ---
 
 ## Checklist de Entrega
 
 ### Documentación
-- [ ] Reporte completo
-- [ ] Todos los pasos documentados
-- [ ] Screenshots de calidad
-- [ ] Comandos con outputs
-- [ ] Problemas explicados
+- [x] Reporte completo
+- [x] Todos los pasos documentados
+- [x] Screenshots de calidad
+- [x] Comandos con outputs
+- [x] Problemas explicados
 
 ### Red Team
-- [ ] 4 vulnerabilidades explotadas
-- [ ] Cada una con PoC completo
-- [ ] CVSS calculado
-- [ ] OWASP Top 10 clasificación
+- [x] 4 vulnerabilidades explotadas
+- [x] Cada una con PoC completo
+- [x] CVSS calculado
+- [x] OWASP Top 10 clasificación
 
 ### Blue Team
-- [ ] 3 reglas configuradas
-- [ ] Alertas funcionando
-- [ ] Dashboard de detecciones
-- [ ] Informe de respuesta
+- [x] 3 reglas configuradas
+- [x] Alertas funcionando
+- [x] Dashboard de detecciones
+- [x] Informe de respuesta
 
 ### Archivos
-- [ ] reporte-final.pdf o .md
-- [ ] screenshots/ organizado
+- [x] reporte-final.pdf o .md
+- [x] screenshots/ organizado
 - [ ] comandos.txt
-- [ ] reglas-deteccion.json
-- [ ] dashboard-export.ndjson
+- [x] reglas-deteccion.json
+- [x] dashboard-export.ndjson
 
 ---
 
 **Fin del Reporte**
 
-**Fecha de Entrega**: ___________________________  
-**Firma**: ___________________________
+**Fecha de Entrega**: 25 de noviembre de 2025  
+**Firma**: Pablo Zamora, Diego Aquino y Erick Guerra
