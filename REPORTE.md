@@ -607,17 +607,73 @@ curl "http://localhost:3000/rest/products/search?q=' OR 1=1 --"
 
 ### Red Team: Vulnerabilidades Explotadas
 
-#### Vulnerabilidad 1: SQL Injection en Login
+#### Vulnerabilidad 1: Exposición de rutas
 
 **Descripción Técnica**:
-[Explica qué es SQL Injection y cómo funciona]
+Debido a que el *frontend* de Juice Shop es una *Single Page Application* (SPA), herramientas como *dirbuster* o *gobuster*
+no resultan del todo útiles para encontrar todas las rutas que ofrece la aplicación, ya que las SPAs usualmente cuentan
+con un *fallback* de ruteo; es decir, si una ruta especificada por el usuario no está definida, se redirige a una página
+por defecto, haciendo que cualquier ruta que se pruebe durante el reconocimiento retorne un estatus "200 OK".
+Por suerte, el código fuente de Juice Shop (main.js) parece definir todas las rutas de la aplicación.
+
+Este comportamiento no representa un fallo de seguridad por sí mismo, pero puede facilitar el reconocimiento durante una
+fase de enumeración, permitiendo a un atacante descubrir funcionalidades o rutas del frontend más fácilmente.
+
+**Pasos para Reproducir**:
+1. Ingresar a la interfaz gráfica de Juice Shop desde el navegador.
+2. Capturar el tráfico de solicitudes con las DevTools del navegador o con BurpSuite.
+3. Recargar la página y buscar el archivo "main.js" dentro de las respuestas.
+4. Buscar la sección de código en la que se definen las rutas que soporta la aplicación.
+
+**Impacto**:
+- **Confidencialidad**: 🟢 BAJO - Solo revela rutas del frontend, no datos sensibles.
+- **Integridad**: 🟢 BAJO - No permite modificar información.
+- **Disponibilidad**: 🟢 BAJO - No afecta el rendimiento ni provoca denegación de servicio.
+
+**Clasificación**:
+- **CWE**: CWE-200: Information Exposure
+- **OWASP Top 10**: A01:2021 - Broken Access Control
+- **CVSS v3.1**: 3.1 (Low)
+- **Vector**: CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N
+
+**Cálculo CVSS**:
+- **AV:N** (Attack Vector: Network) - Se explota desde el navegador sin acceso local.
+- **AC:L** (Attack Complexity: Low) - Basta abrir main.js.
+- **PR:N** (Privileges Required: None) - No requiere autenticación.
+- **UI:N** (User Interaction: None) - No requiere interacción adicional.
+- **C:L** (Confidentiality: Low) - Exposición mínima de información no sensible.
+- **I:N** (Integrity: None) - No se altera información.
+- **A:H** (Availability: None) - No afecta disponibilidad.
+
+**Screenshots**:
+
+![Exposed paths](./red-team/exposed-paths.PNG)
+
+#### Vulnerabilidad 2: SQL Injection en Login
+
+**Descripción Técnica**:
+SQL Injection es una vulnerabilidad que ocurre cuando una aplicación web construye consultas SQL concatenando directamente la entrada proporcionada por el usuario sin validación ni sanitización adecuada.
+Esto permite que un atacante inserte fragmentos de código SQL malicioso para:
+
+- Alterar la lógica de autenticación
+- Consultar o modificar información sensible
+- Otener acceso no autorizado,
+- Comprometer toda la base de datos.
+
+La página de Login de Juice Shop presenta esta vulnerabilidad. Al navegar por todo el sitio utilizando el proxy de Burp Suite
+se capturó la llamada al endpoint `/rest/user/login`, el cual únicamente recibe el correo electrónico y contraseña del usuario
+en el cuerpo de la solicitud. Al inyectar SQL en el primero de estos campos, fue posible iniciar sesión como administrador.
 
 **Endpoint Vulnerable**: `/rest/user/login`
 
 **Pasos para Reproducir**:
-1. [Paso 1]
-2. [Paso 2]
-3. [Paso 3]
+1. Utilizar BurpSuite (o dirigirse a la página de Login de la interfaz de usuario) e ingresar el payload `' OR 1=1--` en el
+campo de "email".
+2. El contenido del campo "password" es indiferente.
+3. Enviar la solicitud (o presionar el botón de "Iniciar sesión").
+4. La respuesta a la solicitud enviada será un token válido para el usuario administrador. Este puede usarse para interactuar
+con endpoints protegidos. En caso de enviar este payload desde la interfaz de usuario, la aplicación redigirá automáticamente
+a la página principal.
 
 **Payload Utilizado**:
 ```bash
@@ -631,43 +687,152 @@ curl -X POST http://localhost:3000/rest/user/login \
 
 **Response Obtenida**:
 ```json
-[Pega la respuesta]
+{"authentication":{"token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdGF0dXMiOiJzdWNjZXNzIiwiZGF0YSI6eyJpZCI6MSwidXNlcm5hbWUiOiIjezYqNn0iLCJlbWFpbCI6ImFkbWluQGp1aWNlLXNoLm9wIiwicGFzc3dvcmQiOiIwMTkyMDIzYTdiYmQ3MzI1MDUxNmYwNjlkZjE4YjUwMCIsInJvbGUiOiJhZG1pbiIsImRlbHV4ZVRva2VuIjoiIiwibGFzdExvZ2luSXAiOiIiLCJwcm9maWxlSW1hZ2UiOiJhc3NldHMvcHVibGljL2ltYWdlcy91cGxvYWRzL2RlZmF1bHRBZG1pbi5wbmciLCJ0b3RwU2VjcmV0IjoiIiwiaXNBY3RpdmUiOnRydWUsImNyZWF0ZWRBdCI6IjIwMjUtMTEtMjQgMTY6NTU6MjIuNjAzICswMDowMCIsInVwZGF0ZWRBdCI6IjIwMjUtMTEtMjQgMTk6MzA6MzcuOTU2ICswMDowMCIsImRlbGV0ZWRBdCI6bnVsbH0sImlhdCI6MTc2NDAyOTUyM30.JpMmfOWh9pYN-YaOf4c9B2OleAUGK4kMqX6UiA7LTPGxff3wal5GBXoMO88T0waGeOZjnGX1xjzXV5sr5kymWGcoGDVOU5sF-43jS1Z95EYiE0iJ0RhOuQcoke8oCHk1AX7s0kadrIY-pe5i_dCReQGE2zj6auqdqbExoefpJ4E","bid":1,"umail":"admin@juice-sh.op"}}
 ```
 
 **Impacto**:
-- **Confidencialidad**: 🔴 CRÍTICO - [Explica por qué]
-- **Integridad**: 🔴 CRÍTICO - [Explica por qué]
-- **Disponibilidad**: 🟡 MEDIO - [Explica por qué]
+- **Confidencialidad**: 🔴 CRÍTICO - El atacante obtiene acceso completo a una cuenta privilegiada (admin),
+permitiéndole ver información de usuarios, pedidos, direcciones, tokens y archivos internos.
+- **Integridad**: 🔴 CRÍTICO - Con privilegios administrativos el atacante puede modificar inventario, subir imágenes,
+cambiar precios, borrar usuarios y alterar configuraciones.
+- **Disponibilidad**: 🟡 MEDIO - Si bien el ataque no detiene la aplicación directamente, un atacante con rol administrador puede
+eliminar datos críticos, borrar productos, deshabilitar funciones o causar corrupción lógica que impida operar.
 
 **Clasificación**:
+- **CWE**: CWE-89: Improper Neutralization of Special Elements used in an SQL Command
 - **OWASP Top 10**: A03:2021 - Injection
 - **CVSS v3.1**: 9.8 (Critical)
 - **Vector**: CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H
 
 **Cálculo CVSS**:
-- **AV:N** (Attack Vector: Network) - [Explica por qué]
-- **AC:L** (Attack Complexity: Low) - [Explica por qué]
-- **PR:N** (Privileges Required: None) - [Explica por qué]
-- **UI:N** (User Interaction: None) - [Explica por qué]
-- **C:H** (Confidentiality: High) - [Explica por qué]
-- **I:H** (Integrity: High) - [Explica por qué]
-- **A:H** (Availability: High) - [Explica por qué]
+- **AV:N** (Attack Vector: Network) - El ataque puede realizarse remotamente, enviando un request HTTP al endpoint vulnerable, sin acceso físico.
+- **AC:L** (Attack Complexity: Low) - No requiere condiciones especiales, solo enviar un payload simple como ' OR 1=1--.
+- **PR:N** (Privileges Required: None) - No es necesario estar autenticado; incluso un usuario anónimo puede explotar el endpoint.
+- **UI:N** (User Interaction: None) - Ningún usuario legítimo debe realizar una acción para que el ataque se complete.
+- **C:H** (Confidentiality: High) - Acceso total a los datos sensibles del sistema (por quedar autenticado como admin).
+- **I:H** (Integrity: High) - El atacante puede modificar información crítica (productos, usuarios, inventario, configuraciones).
+- **A:H** (Availability: High) - Aunque no es un ataque de DoS puro, un atacante autenticado como admin puede causar interrupciones significativas y dejar el sistema inutilizable.
 
 **Screenshots**:
-![SQLi Request](./screenshots/paso-6/sqli-01-request.png)
-![SQLi Response](./screenshots/paso-6/sqli-02-response.png)
 
-#### Vulnerabilidad 2: Cross-Site Scripting (XSS)
+![SQLi Request frontend](./red-team/login-demo1.PNG)
+![SQLi Request BurpSuite](./red-team/login-demo3.PNG)
+![SQLi Response](./red-team/login-demo2.PNG)
 
-[Sigue el mismo formato detallado]
+#### Vulnerabilidad 3: Cross-Site Scripting (XSS) reflejado
 
-#### Vulnerabilidad 3: Broken Authentication
+**Descripción Técnica**:
 
-[Sigue el mismo formato detallado]
+[Explica qué es XSS  y cómo funciona]
 
-#### Vulnerabilidad 4: Broken Access Control
+Cross-Site Scripting (XSS) es una vulnerabilidad que permite a un atacante inyectar código JavaScript malicioso en una aplicación web. Este código se ejecuta en el navegador de la víctima, aprovechando que la aplicación refleja o almacena contenido proporcionado por el usuario sin realizar sanitización ni escape adecuado.
 
-[Sigue el mismo formato detallado]
+En el caso de XSS reflejado (reflected XSS), la carga útil enviada por el atacante es devuelta inmediatamente en la respuesta del servidor y ejecutada en el navegador cuando la víctima accede a la URL manipulada. Juice Shop es vulnerable porque la ruta de búsqueda `/search?q=` inserta la cadena enviada por el usuario directamente en la página, sin validación.
+
+Esto permite ejecutar JavaScript arbitrario, abrir iframes maliciosos, robar cookies o tokens JWT, e incluso redirigir al usuario a sitios externos controlados por el atacante.
+
+**Endpoint Vulnerable**: `/rest/products/search?q=`
+
+**Pasos para Reproducir**:
+1. Acceder al cuadro de búsqueda en la página principal de Juice Shop.
+2. Ingresar el payload deseado en el cuadro de búsqueda. Alternativamente, enviar la solicitud desde BurpSuite o el navegador, inyectando el payload en el *query param* "q".
+3. Cuando se reciba respuesta del endpoint `rest/products/search?q=`, el código se incrustará en el DOM.
+4. El navegador ejecutará el código JavaScript malicioso embebido.
+
+**Payload Utilizado**:
+```bash
+<iframe src="javascript:alert('XSS ejecutado exitosamente')">
+```
+
+**Response Obtenida**:
+```json
+{
+  "error": {
+    "message": "SQLITE_ERROR: near \"XSS\": syntax error",
+    "stack": "Error: SQLITE_ERROR: near \"XSS\": syntax error",
+    "errno": 1,
+    "code": "SQLITE_ERROR",
+    "sql": "SELECT * FROM Products WHERE ((name LIKE '%<iframe src=\"javascript:alert('XSS ejecutado exitosamente')\">%' OR description LIKE '%<iframe src=\"javascript:alert('XSS ejecutado exitosamente')\">%') AND deletedAt IS NULL) ORDER BY name"
+  }
+}
+```
+
+**Impacto**:
+- **Confidencialidad**: 🟠 MEDIO/ALTO - Permite robo de cookies o tokens JWT, lectura de información mostrada en pantalla o
+envío de datos a un servidor externo.
+- **Integridad**: 🟡 MEDIO - Un payload puede manipular el DOM cambiando textos, insertando botones falsos o modificando enlaces y formularios.
+- **Disponibilidad**: 🟡 BAJO/MEDIO - Se podría ejecutar JavaScript que bloquee el navegador, genere loops infinitos o redireccione a un sitio externo.
+
+**Clasificación**:
+- **CWE**: CWE-79: Improper Neutralization of Input During Web Page Generation (Cross-Site Scripting)
+- **OWASP Top 10**: A03:2021 - Injection
+- **CVSS v3.1**: 6.1 - Medium
+- **Vector**: CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:N
+
+**Cálculo CVSS**:
+- **AV:N** (Attack Vector: Network) - El ataque se ejecuta simplemente accediendo a una URL, no requiere acceso físico.
+- **AC:L** (Attack Complexity: Low) - El payload es simple y no requiere condiciones especiales.
+- **PR:N** (Privileges Required: None) - La vulnerabilidad es explotable por cualquier usuario anónimo.
+- **UI:N** (User Interaction: Required) - La víctima debe abrir el enlace malicioso o usar el campo de búsqueda.
+- **C:H** (Confidentiality: Low) - El atacante puede obtener información básica del usuario (cookies, tokens).
+- **I:H** (Integrity: Low) - Puede manipular parcialmente el DOM, alterando el contenido visto por la víctima.
+- **A:H** (Availability: None) - El objetivo principal no es detener la aplicación, aunque puede molestarse la navegación.
+
+**Screenshots**:
+
+![XSS](./red-team/XSS-demo.PNG)
+![XSS](./red-team/XSS-demo2.PNG)
+![XSS](./red-team/XSS-result.PNG)
+
+#### Vulnerabilidad 4: Broken Access Control al cambiar contraseña
+
+**Descripción Técnica**:
+
+Broken Access Control se presenta cuando una aplicación no implementa adecuadamente verificaciones de permisos, identidad u operaciones sensibles. En este caso, el endpoint `/rest/user/change-password` permite modificar la contraseña del usuario sin verificar la contraseña actual, ya que dicha validación ocurre únicamente en el frontend.
+
+Esto significa que un atacante que obtenga un token JWT (por XSS, MITM, fuga de logs, sesión robada, etc.) puede cambiar la contraseña sin necesidad de conocer la contraseña actual, lo que implica un secuestro total y permanente de la cuenta.
+
+**Endpoint Vulnerable**: `/rest/user/change-password`
+
+**Pasos para Reproducir**:
+1. Obtener el token de sesión válido del usuario objetivo.
+2. Realizar una solicitud GET (con el navegador o Burp Suite) a `/rest/user/change-password`, únicamente con los parámetros "new" y "repeat" (que deben ser iguales) con la nueva contraseña deseada.
+3. El servidor omitirá la validación de la contraseña actual y actualizará la contraseña del usuario.
+
+**Payload Utilizado**:
+```bash
+curl -X GET "http://localhost:3000/rest/user/change-password?new=<nueva>&repeat=<nueva>" \
+  -H "Authorization: Bearer <TOKEN_VALIDO>"
+```
+
+**Response Obtenida**:
+```json
+{"user":{"id":23,"username":"","email":"test@gmail.com","password":"cc03e747a6afbbcbf8be7668acfebee5","role":"customer","deluxeToken":"","lastLoginIp":"","profileImage":"/assets/public/images/uploads/default.svg","totpSecret":"","isActive":true,"createdAt":"2025-11-24T18:36:38.457Z","updatedAt":"2025-11-25T01:58:11.009Z","deletedAt":null}}
+```
+
+**Impacto**:
+- **Confidencialidad**: 🟠 ALTO - Un atacante que haya obtenido un token JWT puede acceder permanentemente a la cuenta y todos sus datos privados.
+- **Integridad**: 🟠 ALTO - El atacante puede cambiar la contraseña, modificar datos del usuario e impersonarlo permanentemente.
+- **Disponibilidad**: 🟡 MEDIO - Aunque no es un ataque de DoS, el atacante puede bloquear al usuario legítimo de su propia cuenta e impedirle iniciar sesión al cambiar la password.
+
+**Clasificación**:
+- **CWE**: CWE-306: Missing Authentication for Critical Function y CWE-862: Missing Authorization
+- **OWASP Top 10**: A01: Broken Access Control y A07: Identification and Authentication Failures
+- **CVSS v3.1**: 8.8 - High
+- **Vector**: CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H
+
+**Cálculo CVSS**:
+- **AV:N** (Attack Vector: Network) - El ataque se ejecuta por HTTP.
+- **AC:L** (Attack Complexity: Low) - Solo requiere enviar una solicitud manipulada.
+- **PR:N** (Privileges Required: Low) - El atacante necesita un token JWT válido (rol básico).
+- **UI:N** (User Interaction: None) - No requiere que la víctima haga clic o realice acciones.
+- **C:H** (Confidentiality: High) - Compromiso total de la cuenta.
+- **I:H** (Integrity: High) - Se modifica información sensible (la contraseña).
+- **A:H** (Availability: High) - Puede bloquear al usuario legítimo al impedirle el acceso.
+
+**Screenshots**:
+
+![Broken Access Control](./red-team/change-password.PNG)
 
 ### Coordinación Red Team - Blue Team
 
