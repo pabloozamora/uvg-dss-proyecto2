@@ -25,7 +25,13 @@ Erick Stiv Junior Guerra - 21781
 ## Resumen Ejecutivo
 
 ### Descripción del Proyecto
-[Describe en 2-3 párrafos qué es el proyecto, qué tecnologías usaste y qué lograste]
+Este proyecto consistió en la implementación completa de un sistema de monitoreo, análisis y visualización de eventos utilizando la pila ELK Stack (Elasticsearch, Kibana y Filebeat), junto con la aplicación vulnerable OWASP Juice Shop, desplegada en un entorno contenedorizado con Docker. El objetivo principal fue crear un flujo de observabilidad funcional que permitiera capturar logs en tiempo real, analizarlos y utilizarlos para detectar ataques de seguridad comunes en aplicaciones web.
+
+A lo largo del proyecto se desplegaron y configuraron los servicios necesarios, se estableció un pipeline de recolección de logs desde los contenedores hacia Elasticsearch, y se construyeron visualizaciones y dashboards dentro de Kibana para facilitar el análisis. Además, se crearon reglas de detección para identificar ataques como SQL Injection, Cross-Site Scripting y fuerza bruta, lo que permitió integrar capacidades básicas de monitoreo de seguridad tipo “Blue Team”.
+
+Asimismo, se ejecutó un proceso de Red Team, donde se explotaron cuatro vulnerabilidades reales presentes en Juice Shop. Cada vulnerabilidad se documentó con su descripción técnica, prueba de concepto, impacto y cálculo CVSS. Estos ataques generaron tráfico que fue capturado por Filebeat y visualizado en Kibana, demostrando la efectividad del sistema.
+
+En conclusión, el proyecto permitió integrar de forma práctica conceptos de seguridad ofensiva, monitoreo, análisis de logs y detección de amenazas, mostrando cómo una arquitectura basada en ELK puede ser utilizada tanto para observabilidad general como para seguridad aplicada en aplicaciones web modernas.
 
 ### Objetivos Cumplidos
 - [x] Sistema ELK Stack completamente funcional
@@ -71,8 +77,6 @@ docker compose up -d
 # Comando 2
 docker compose ps
 ```
-
-[Continúa con todos los comandos...]
 
 ### Screenshots
 
