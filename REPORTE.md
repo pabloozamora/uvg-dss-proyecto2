@@ -598,7 +598,8 @@ curl "/blog/xss?example=%3Cscript%3Ealert('test')%3C/script%3E"
 - Risk score: 70
 
 **Prueba**:
-```# Intentos fallidos de login
+```bash
+# Intentos fallidos de login
 for i in {1..10}; do
   curl -X POST "http://localhost:8080/rest/user/login" \
   -H "Content-Type: application/json" \
@@ -623,7 +624,7 @@ Usuario que se equivoca varias veces en su email o contraseña.
 curl "/rest/user/login HTTP/1.1"
 ```
 
-#### Regla 3: Traffic Scanner
+#### Regla 4: Traffic Scanner
 
 **Configuración**:
 - Name: Detección Brute force
