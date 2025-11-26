@@ -1,8 +1,8 @@
 # Proyecto 2 - Sistema de Logging con ELK Stack
 
-Pablo Andrés Zamora Vásquez - 21780
-Diego Andrés Morales Aquino - 21762
-Erick Stiv Junior Guerra - 21781
+Pablo Andrés Zamora Vásquez - 21780  
+Diego Andrés Morales Aquino - 21762  
+Erick Stiv Junior Guerra - 21781  
 **Fecha**: 25/11/2025  
 
 ---
