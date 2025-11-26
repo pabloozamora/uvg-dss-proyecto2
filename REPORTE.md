@@ -1094,20 +1094,6 @@ curl -X POST "http://juiceshop:3000/api/BasketItems/" \
 ![Improper Input Validation](./red-team/negative-quanitity4.PNG)
 ![Improper Input Validation](./red-team/negative-quanitity5.PNG)
 
-### Coordinación Red Team - Blue Team
-
-**Resultados de Detección**:
-| Ataque | Detectado | Tiempo de Detección |
-|--------|-----------|---------------------|
-| SQL Injection | [Sí/No] | [Tiempo] |
-| XSS | [Sí/No] | [Tiempo] |
-| Auth Bypass | [Sí/No] | [Tiempo] |
-| Access Control | [Sí/No] | [Tiempo] |
-
-### Screenshots
-
-[Mínimo 12 screenshots]
-
 ### Verificación de Éxito
 - [x] 3 reglas de detección configuradas
 - [x] 4 vulnerabilidades explotadas
