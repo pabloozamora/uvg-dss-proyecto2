@@ -633,7 +633,8 @@ curl "/rest/user/login HTTP/1.1"
 - Risk score: 60
 
 **Prueba**:
-```curl -A "sqlmap/1.7.2" "http://localhost:8080/rest/products/search?q=test"
+```bash
+curl -A "sqlmap/1.7.2" "http://localhost:8080/rest/products/search?q=test"
 ```
 
 **Resultado**:
@@ -662,7 +663,8 @@ User-Agent: sqlmap/1.6.12#stable
 - Risk score: 90
 
 **Prueba**:
-```http://localhost:8080/ping?ip=127.0.0.1;cat%20/etc/passwd
+```bash
+http://localhost:8080/ping?ip=127.0.0.1;cat%20/etc/passwd
 ```
 
 **Resultado**:
