@@ -654,7 +654,7 @@ GET / HTTP/1.1
 User-Agent: sqlmap/1.6.12#stable
 ```
 
-#### Regla 4: Command Injection
+#### Regla 5: Command Injection
 
 **Configuración**:
 - Name: Detección Brute force
