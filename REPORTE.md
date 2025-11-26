@@ -25,7 +25,12 @@ Erick Stiv Junior Guerra - 21781
 ## Resumen Ejecutivo
 
 ### Descripción del Proyecto
-[Describe en 2-3 párrafos qué es el proyecto, qué tecnologías usaste y qué lograste]
+
+Este proyecto consiste en la implementación de un sistema completo de monitoreo y análisis de seguridad utilizando la pila ELK (Elasticsearch, Logstash, Kibana) junto con Filebeat como agente de recolección de logs. El objetivo principal fue desplegar una infraestructura de logging centralizado para monitorear la aplicación vulnerable OWASP Juice Shop, permitiendo detectar y analizar ataques de seguridad en tiempo real.
+
+El proyecto se divide en dos componentes principales: Red Team y Blue Team. Como Red Team, se identificaron y explotaron cuatro vulnerabilidades críticas en Juice Shop (SQL Injection, XSS, Improper Input Validation y Broken Access Control), documentando cada una con su respectivo PoC, impacto y puntuación CVSS. Como Blue Team, se configuraron reglas de detección en Kibana para identificar estos ataques, incluyendo detección de SQL Injection, XSS, scanners de seguridad, fuerza bruta y command injection.
+
+Como resultado, se logró implementar un sistema funcional que recolecta logs de contenedores Docker, los indexa en Elasticsearch, y permite visualizarlos y analizarlos mediante dashboards y reglas de detección en Kibana. El proyecto demuestra cómo un sistema de logging centralizado puede ser fundamental para la detección temprana de amenazas y la respuesta ante incidentes de seguridad.
 
 ### Objetivos Cumplidos
 - [x] Sistema ELK Stack completamente funcional
@@ -72,7 +77,15 @@ docker compose up -d
 docker compose ps
 ```
 
-[Continúa con todos los comandos...]
+```bash
+# Comando 3
+curl http://localhost:3000
+```
+
+```bash
+# Comando 4
+docker compose logs juice-shop
+```
 
 ### Screenshots
 
@@ -118,9 +131,11 @@ docker compose ps
 - [x] 4 screenshots capturados
 
 ### Conceptos Aprendidos
-1. **Docker Compose**: [Explica qué aprendiste]
-2. **Port Mapping**: [Explica qué aprendiste]
-3. **Container Logs**: [Explica qué aprendiste]
+1. **Docker Compose**: Docker Compose es una herramienta que permite definir y ejecutar aplicaciones multi-contenedor mediante un archivo YAML. En este proyecto, se utilizó para orquestar múltiples servicios (Juice Shop, Elasticsearch, Kibana, Filebeat) en una sola red, simplificando el despliegue y la gestión de dependencias entre contenedores.
+
+2. **Port Mapping**: El port mapping o mapeo de puertos permite exponer los puertos internos de un contenedor Docker al host. Por ejemplo, `-p 3000:3000` mapea el puerto 3000 del contenedor al puerto 3000 del host, permitiendo acceder a Juice Shop desde `localhost:3000`. Esto es esencial para acceder a servicios que corren dentro de contenedores aislados.
+
+3. **Container Logs**: Docker captura automáticamente las salidas stdout y stderr de los procesos que corren dentro de los contenedores y las almacena como logs. El comando `docker compose logs` permite acceder a estos registros, facilitando el debugging y monitoreo de aplicaciones. Estos logs son la fuente de datos que Filebeat recolecta para enviar a Elasticsearch.
 
 ---
 
@@ -223,9 +238,11 @@ curl "http://localhost:9200/_cat/indices?v"
 - [x] 5 screenshots capturados
 
 ### Conceptos Aprendidos
-1. **Elasticsearch**: [Explica]
-2. **Índices y Documentos**: [Explica]
-3. **RESTful API**: [Explica]
+1. **Elasticsearch**: Elasticsearch es un motor de búsqueda y análisis distribuido basado en Apache Lucene. Almacena datos en formato JSON y permite realizar búsquedas complejas y agregaciones en tiempo real sobre grandes volúmenes de información. En este proyecto, actúa como el repositorio central donde se indexan todos los logs recolectados por Filebeat.
+
+2. **Índices y Documentos**: En Elasticsearch, los datos se organizan en índices (similares a bases de datos) y documentos (similares a registros). Cada documento es un objeto JSON que contiene campos con información específica. Por ejemplo, un log de Juice Shop se almacena como un documento dentro del índice `filebeat-*`, con campos como timestamp, mensaje, contenedor, IP, etc.
+
+3. **RESTful API**: Elasticsearch expone toda su funcionalidad a través de una API REST sobre HTTP. Esto permite realizar operaciones como crear índices, insertar documentos, realizar búsquedas y obtener métricas del cluster usando simples peticiones HTTP (GET, POST, PUT, DELETE). Esta API es la que utilizan tanto Kibana como Filebeat para comunicarse con Elasticsearch.
 
 ---
 
@@ -295,9 +312,11 @@ curl http://localhost:5601/api/status | jq .
 - [x] 4 screenshots capturados
 
 ### Conceptos Aprendidos
-1. **Kibana**: [Explica]
-2. **Dev Tools**: [Explica]
-3. **Redes Docker**: [Explica]
+1. **Kibana**: Kibana es la interfaz visual del stack ELK que permite explorar, visualizar y analizar datos almacenados en Elasticsearch. Ofrece herramientas como Discover (exploración de logs), Visualize (creación de gráficos), Dashboard (paneles de control) y Dev Tools (consola de API). Es fundamental para transformar datos crudos en insights accionables.
+
+2. **Dev Tools**: Dev Tools es una consola interactiva en Kibana que permite ejecutar queries directamente contra la API de Elasticsearch usando una sintaxis simplificada. Facilita el testing de búsquedas, la creación de índices, y la exploración de datos sin necesidad de usar curl o herramientas externas. Es invaluable para debugging y aprendizaje.
+
+3. **Redes Docker**: Docker permite crear redes virtuales aisladas donde los contenedores pueden comunicarse entre sí usando nombres de servicio como hostnames. En este proyecto, todos los servicios (Juice Shop, Elasticsearch, Kibana, Filebeat) están conectados a la red `elk-network`, permitiendo que Kibana se conecte a Elasticsearch usando `http://elasticsearch:9200` en lugar de IPs que pueden cambiar.
 
 ---
 
@@ -391,9 +410,11 @@ curl -X GET "http://localhost:9200/filebeat-juice-shop-*/_search?size=1&pretty"
 - [x] 5 screenshots capturados
 
 ### Conceptos Aprendidos
-1. **Filebeat**: [Explica]
-2. **Log Shipping**: [Explica]
-3. **Processors**: [Explica]
+1. **Filebeat**: Filebeat es un agente ligero de recolección de logs (log shipper) que pertenece a la familia de Beats de Elastic. Monitorea archivos de log especificados, lee nuevas líneas conforme se generan, y las envía a destinos como Elasticsearch o Logstash. Es más eficiente que soluciones pesadas ya que está diseñado específicamente para shipping de logs.
+
+2. **Log Shipping**: El log shipping es el proceso de recolectar logs de múltiples fuentes (archivos, contenedores, servicios) y transportarlos a un sistema centralizado de almacenamiento y análisis. Filebeat implementa este patrón monitoreando los logs de Docker, agregando metadata útil (nombre del contenedor, imagen, labels), y enviándolos a Elasticsearch de forma confiable y eficiente.
+
+3. **Processors**: Los processors en Filebeat son módulos que transforman o enriquecen los eventos antes de enviarlos a Elasticsearch. Pueden agregar campos, parsear JSON, extraer información de mensajes, eliminar campos innecesarios, o aplicar filtros. En este proyecto, se usan processors para agregar metadata de contenedores Docker y normalizar los campos de los logs.
 
 ---
 
@@ -519,10 +540,13 @@ container.name: ("juice-shop" OR "kibana")
 - [x] 12 screenshots capturados
 
 ### Conceptos Aprendidos
-1. **Data Views**: [Explica]
-2. **KQL**: [Explica]
-3. **Visualizaciones**: [Explica]
-4. **Dashboards**: [Explica]
+1. **Data Views**: Los Data Views (anteriormente Index Patterns) son configuraciones en Kibana que definen qué índices de Elasticsearch se van a consultar. Permiten usar wildcards como `filebeat-*` para agrupar múltiples índices relacionados y especificar el campo de tiempo para filtros temporales. Son el primer paso para explorar datos en Kibana.
+
+2. **KQL**: Kibana Query Language (KQL) es un lenguaje de consulta simplificado para buscar y filtrar datos en Kibana. Permite búsquedas como `container.name: "juice-shop"` o `status: 404` de forma intuitiva. Es más amigable que la sintaxis completa de Elasticsearch Query DSL y suficientemente potente para la mayoría de casos de uso en investigación de logs.
+
+3. **Visualizaciones**: Las visualizaciones en Kibana son representaciones gráficas de datos almacenados en Elasticsearch. Pueden ser gráficos de barras, líneas, pie charts, métricas, tablas, mapas de calor, etc. Se construyen seleccionando agregaciones (count, sum, average) y dimensiones (timestamp, campos específicos), permitiendo identificar patrones y tendencias en los datos.
+
+4. **Dashboards**: Los dashboards son colecciones de múltiples visualizaciones organizadas en un solo panel interactivo. Permiten tener una vista holística del sistema, mostrando diferentes métricas y gráficos relacionados en un solo lugar. Son esenciales para monitoreo en tiempo real y para presentar información de forma clara a diferentes audiencias (técnicos, management, analistas de seguridad).
 
 ---
 
@@ -1106,7 +1130,7 @@ curl -X POST "http://juiceshop:3000/api/BasketItems/" \
 - [x] Vulnerabilidades con CVSS calculado
 
 ### Conceptos Aprendidos
-1. **Reglas de Detección**: [Explica]
+1. **Reglas de Detección**: Las reglas de detección son queries automatizadas que se ejecutan periódicamente sobre los logs en Elasticsearch para identificar patrones sospechosos o maliciosos. Cada regla define criterios específicos (como presencia de palabras clave SQL Injection, múltiples intentos de login fallidos, o patrones de XSS), un intervalo de ejecución, y un nivel de severidad. Cuando se cumplen las condiciones, se genera una alerta que el equipo de seguridad puede investigar. Son fundamentales para convertir un sistema de logging pasivo en una herramienta activa de detección de amenazas.
 
 2. **SQL Injection**: SQL Injection (SQLi) es una vulnerabilidad que ocurre cuando una aplicación inserta directamente datos proporcionados por el usuario dentro de una consulta SQL sin sanitización ni validación adecuada.
 Esto permite que un atacante inyecte código SQL malicioso, alterando la lógica original de la consulta.
