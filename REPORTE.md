@@ -652,6 +652,34 @@ GET / HTTP/1.1
 User-Agent: sqlmap/1.6.12#stable
 ```
 
+#### Regla 4: Command Injection
+
+**Configuración**:
+- Name: Detección Brute force
+- Type: Custom query
+- Query: `request_uri.keyword: %3B or request_uri.keyword: %7C or request_uri.keyword: %60`
+- Severity: critical
+- Risk score: 90
+
+**Prueba**:
+```http://localhost:8080/ping?ip=127.0.0.1;cat%20/etc/passwd
+```
+
+**Resultado**:
+Fue posible detectar ataques de inyección de comandos.
+
+**Limitaciones**:
+
+La regla es muy ruidosa porque solo detecta caracteres codificados comunes (%3B, %7C, %60) que aparecen mucho en tráfico legítimo, sobre todo en URLs, filtros, documentación y snippets de código. No tiene en cuenta la ruta, el contexto ni patrones claros de explotación, así que se dispara incluso con ejemplos de comandos normales. Por sí sola genera muchos falsos positivos y solo sirve como indicio débil que hay que correlacionar con otros factores (endpoint sensible, combinación de operadores, repetición por IP, errores del servidor).
+
+Ejemplo de falso positivo:
+
+Un usuario abre una página de documentación interna donde se muestran ejemplos de comandos para desplegar una app.
+
+```bash
+https://intranet.empresa.local/docs/deploy?cmd=git%20pull%3B%20npm%20install%20%7C%7C%20echo%20%60error%60
+```
+
 ### Red Team: DAST
 
 Se efectuaron tres tipos de escaneo con OWASP ZAP: automatizado, activo y manual. Asimismo, se ejecutaron las herramientas Spider y AJAX Spider, utilizando credenciales válidas de autenticación para permitirles explorar más allá de la página de inicio de sesión. Durante los escaneos se encontraron 683 URLs únicas y se realizaron 7724 peticiones:
